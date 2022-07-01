@@ -1,0 +1,16 @@
+type Query {
+  getAllProducts(): [AmazonProduct]
+  getProduct(asin: String!): AmazonProduct
+}
+
+type Mutation {
+  addAmazonProduct(asin: String!, name: String!, size: String, weight: String, attributes: [String]): AmazonProduct!
+}
+
+type AmazonProduct {
+  id: ID!
+  asin: String!
+  name: String!
+  size: String
+  weight: String
+}

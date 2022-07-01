@@ -1,0 +1,17 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AmazonProduct {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  asin String @unique
+  name String
+  size String
+  weight String
+}
