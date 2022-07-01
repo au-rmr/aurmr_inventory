@@ -1,5 +1,5 @@
 type Query {
-  getAllProducts(): [AmazonProduct]
+  getAllProducts: [AmazonProduct]
   getProduct(asin: String!): AmazonProduct
 }
 
@@ -13,4 +13,5 @@ type AmazonProduct {
   name: String!
   size: String
   weight: String
+  attributes: [String]
 }
