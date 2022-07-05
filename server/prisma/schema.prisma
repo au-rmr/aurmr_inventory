@@ -14,5 +14,5 @@ model AmazonProduct {
   name String
   size String
   weight String
-  attributes: String[]
+  attributes String
 }
