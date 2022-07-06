@@ -27,13 +27,22 @@ module.exports = {
 
     Mutation: {
         addAmazonProduct: (_, args, context, info) => {
+            // const newAttr = context.prisma.attribute.create({
+            //     data: {
+            //         value: args.attributes
+            //     },
+            // });
+
+            // const allAttr = context.prisma.attribute.findMany()
+            // args.attributes = allAttr
+            // // allAttr.append(newAttr);
+            // console.log(allAttr)
             const newProduct = context.prisma.amazonProduct.create({
                 data: {
                     asin: args.asin,
                     name: args.name,
                     size: args.size,
-                    weight: args.weight, 
-                    attributes: args.attributes
+                    weight: args.weight,
                 },
             })
             return newProduct
