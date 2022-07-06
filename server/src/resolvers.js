@@ -20,6 +20,9 @@ module.exports = {
 
         return prods;
        },
+       getAllAttributes: (_, args, context) => {
+        return context.prisma.attribute.findMany()
+       },
     },
 
     Mutation: {
@@ -35,6 +38,16 @@ module.exports = {
             })
             return newProduct
         }, 
+        addAttribute: (_, args, context, info) => {
+            
+            const newAttribute = context.prisma.attribute.create({
+                data: {
+                    value: args.value
+                },
+            })
+            console.log(newAttribute)
+            return newAttribute
+        }
     },
 
     AmazonProduct: {
@@ -43,5 +56,10 @@ module.exports = {
         name: (parent) => parent.name,
         weight: (parent) => parent.weight,
         size: (parent) => parent.size
-    }
+    },
+
+    Attribute: {
+        id: (parent) => parent.id,
+        value: (parent) => parent.value,
+    },
 }

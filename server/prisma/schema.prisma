@@ -8,11 +8,17 @@ generator client {
 }
 
 model AmazonProduct {
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  asin String @unique
-  name String
-  size String
-  weight String
-  attributes String
+  id         Int         @id @default(autoincrement())
+  createdAt  DateTime    @default(now())
+  asin       String      @unique
+  name       String
+  size       String
+  weight     String
+  attributes Attribute[]
+}
+
+model Attribute {
+  id              Int            @id @default(autoincrement())
+  value           String         @unique
+  AmazonProducts   AmazonProduct[]
 }

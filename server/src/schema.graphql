@@ -1,10 +1,12 @@
 type Query {
   getAllProducts: [AmazonProduct]
   getProduct(filter: String): [AmazonProduct!]!
+  getAllAttributes: [Attribute]
 }
 
 type Mutation {
   addAmazonProduct(asin: String!, name: String!, size: String, weight: String, attributes: String): AmazonProduct!
+  addAttribute(value: String!): Attribute!
 }
 
 type AmazonProduct {
@@ -13,5 +15,11 @@ type AmazonProduct {
   name: String!
   size: String
   weight: String
-  attributes: String
+  attributes: [Attribute]
+}
+
+type Attribute {
+  id: ID!
+  value: String!
+  AmazonProducts: [AmazonProduct]
 }
