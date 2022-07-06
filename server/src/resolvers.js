@@ -4,8 +4,33 @@ let products = [{}]
 
 module.exports = {
     Query: {
-       getAllProducts: (_, args, context) => {
-        return context.prisma.amazonProduct.findMany()
+       getAllProducts: async (_, args, context) => {
+        console.log((await context.prisma.amazonProduct.findMany({
+            include: {
+                attributes: {
+                    select: {
+                        attribute: {
+                            select: {
+                                value: true
+                            }
+                        }
+                    }
+                }
+            }            
+        })))
+        return context.prisma.amazonProduct.findMany({
+            include: {
+                attributes: {
+                    select: {
+                        attribute: {
+                            select: {
+                                value: true
+                            }
+                        }
+                    }
+                }
+            }            
+        })
        },
        getProduct: async (_, args, context, info) => {
         console.log(args)
@@ -21,28 +46,48 @@ module.exports = {
         return prods;
        },
        getAllAttributes: (_, args, context) => {
+        console.log(context.prisma.attribute.findMany())
         return context.prisma.attribute.findMany()
        },
     },
 
     Mutation: {
-        addAmazonProduct: (_, args, context, info) => {
-            // const newAttr = context.prisma.attribute.create({
-            //     data: {
-            //         value: args.attributes
-            //     },
+        addAmazonProduct: async (_, args, context, info) => {
+            // console.log(context.prisma.attribute)
+            // const a = await context.prisma.attribute.findMany({
+            //     where: {
+            //         id: {in: args.attributes.map(parseInt)},
+            //     }
             // });
-
-            // const allAttr = context.prisma.attribute.findMany()
-            // args.attributes = allAttr
-            // // allAttr.append(newAttr);
-            // console.log(allAttr)
+            // console.log(a[0].id);
+            // console.log(await context.prisma.amazonProduct.create({
+            //     data: {
+            //         asin: args.asin,
+            //         name: args.name,
+            //         size: args.size,
+            //         weight: args.weight,
+            //         attributes: await context.prisma.attribute.findMany({
+            //             where: {
+            //                 id: {in: a[0].id},
+            //             }
+            //         }),
+            //     },
+            // }))
             const newProduct = context.prisma.amazonProduct.create({
                 data: {
                     asin: args.asin,
                     name: args.name,
                     size: args.size,
                     weight: args.weight,
+                    attributes: {
+                        create: args.attributes.map(attrId => ({
+                            attribute: {
+                                connect: {
+                                    id: parseInt(attrId)
+                                }
+                            }
+                        }))
+                    },
                 },
             })
             return newProduct

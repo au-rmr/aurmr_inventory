@@ -14,11 +14,20 @@ model AmazonProduct {
   name       String
   size       String
   weight     String
-  attributes Attribute[]
+  attributes AmazonProductAttribute[]
 }
 
 model Attribute {
   id              Int            @id @default(autoincrement())
   value           String         @unique
-  AmazonProducts   AmazonProduct[]
+  AmazonProducts   AmazonProductAttribute[]
+}
+
+model AmazonProductAttribute { 
+  AttributeId Int 
+  AmazonProductId Int 
+  attribute Attribute @relation(fields: [AttributeId], references: [id])
+  amazonProduct AmazonProduct @relation(fields: [AmazonProductId], references: [id])
+
+  @@id([AttributeId, AmazonProductId])
 }
