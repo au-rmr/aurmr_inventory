@@ -36,3 +36,43 @@
     transform: rotate(360deg);
   }
 }
+
+#main {
+  text-align: center;
+  margin: 5px;
+}
+
+#text {
+  font-family: sans-serif;
+}
+
+#filter {
+  font-family: sans-serif;
+  padding-left: 45%;
+  text-align: left;
+  padding-bottom: 3px;
+}
+
+#submit-button {
+  background-color: #ccc;
+  border: 2px solid #ccc;
+  color: rgb(0, 0, 0);
+  font-size: 20px;
+  padding: 10px 60px;
+  border-radius: 10px;
+  margin: 10px 0px;
+  cursor: pointer;
+}
+
+#text-area {
+  width: 9%;
+  height: 50px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background-color: #f8f8f8;
+  font-size: 16px;
+  font-family:sans-serif;
+  resize: none;
+}
