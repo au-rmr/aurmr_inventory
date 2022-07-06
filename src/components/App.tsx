@@ -13,12 +13,12 @@ function App() {
     <Router>
       <ul className='navBar'>
         <li>
-          <NavLink exact to="/">Home</NavLink>
+          <NavLink to="/">Home</NavLink>
         </li>
       </ul>
 
       <Routes>
-        <Route exact path="/" element={<Home />} />
+        <Route path="/" element={<Home />} />
       </Routes>
     </Router>
   );
