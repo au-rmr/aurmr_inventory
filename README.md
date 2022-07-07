@@ -1,70 +1,25 @@
-# Getting Started with Create React App
+# Getting started with the project
+> Questions: Feel free to contact Atharva Kashyap (atharva2@uw.edu)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## How to get the project onto local machine and run the app?
 
-## Available Scripts
+1. First, clone the repository onto your preferred folder inside your local machine. 
+2. Then, `cd` into the repository folder on your local machine. 
+3. If you wish to create a branch and work inside that branch, make sure you perform `git checkout -b "<your-branch-name>"`. This is to create a new branch. You can then perform `git status` to check if your branch was created successfully. 
+4. Now, perform `yarn install`. This is to make sure all the `yarn` packages are installed into your local project. 
+5. Then, change directory into `server`, which you can do by running `cd server`. 
+6. Now, perform `yarn install` again inside the `server` folder to make sure to install necessary modules inside this folder. 
+7. This should set-up your project on the local machine. You can now change directory by going back one level. You can do this by performing `cd ..`. Then, you should be able to run `yarn start` and a reactapp should get started on your web browser. 
 
-In the project directory, you can run:
+## How to start graphql playground? 
+For Your Information: graphql playground is something that runs on `localhost:4000` that provides a space for you to write and test out queries and mutations before making it official and adding it to your app. It also provides you a nice UI that prompts you suggestions when writing your queries and mutations. To get this working, please follow the steps below.
 
-### `yarn start`
+1. First, perform `cd server` so that you are in your `server` folder.
+2. Then, perform `npx prisma generate`
+3. Finally, perform `node src/index.js`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `yarn test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Important things to keep in mind:
+1. You should stop, run `npx prisma generate`, and then re-run `node src/index.js` after any edit within your `server` folder. Then refresh your playground to see changes. 
+2. If you make any edits to `schema.prisma`, it is important to run `prisma migrate dev --name <give-your-migration-a-name>`. This is because you made some edits to your database and you want those changes to be reflected. 
+3. The column names of models that you define in your schema must be exactly same as the models you define in your `graphql.schema`. In other words, the column names that you have for your prisma table needs to be exactly the same as the column names that you give to your graphql schema. 
+4. *Extra (high-level) information about how the server side of things are working*: graphql serves to provide a "front-end" experience, which means this is what you use in the reactapp to query and get information from. graphql then contacts prisma through a mode called `resolvers.js`, which then contacts the database to obtain the data. 
