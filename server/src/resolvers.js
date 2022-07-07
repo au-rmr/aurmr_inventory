@@ -22,6 +22,13 @@ module.exports = {
 
             const prods = await context.prisma.amazonProduct.findMany({
                 where,
+                include: {
+                    attributes: {
+                        include: {
+                            attribute: true
+                        }
+                    }
+                }
             })
             return prods;
         },
@@ -45,8 +52,12 @@ module.exports = {
                 data: {
                     asin: args.asin,
                     name: args.name,
-                    size: args.size,
+                    size_length: args.size_length,
+                    size_width: args.size_width,
+                    size_height: args.size_height,
+                    size_units: args.size_units,
                     weight: args.weight,
+                    weight_units: args.weight_units,
                     attributes: {
                         create: args.attributes.map(attrId => ({
                             attribute: {
@@ -110,7 +121,11 @@ module.exports = {
         asin: (parent) => parent.asin,
         name: (parent) => parent.name,
         weight: (parent) => parent.weight,
-        size: (parent) => parent.size
+        weight_units: (parent) => parent.weight_units,
+        size_length: (parent) => parent.size_length,
+        size_width: (parent) => parent.size_width,
+        size_height: (parent) => parent.size_height,
+        size_units: (parent) => parent.size_units
     },
 
     Attribute: {
