@@ -7,6 +7,8 @@ type Query {
 type Mutation {
   addAmazonProduct(asin: String!, name: String!, size: String, weight: String, attributes: [ID]): AmazonProduct!
   addAttribute(value: String!): Attribute!
+  addAttributeToProduct(asin: String!, attribute: ID): AmazonProduct!
+  deleteAttributeFromProduct(asin: String!, attribute: ID): AmazonProduct!
 }
 
 type AmazonProduct {
@@ -15,18 +17,18 @@ type AmazonProduct {
   name: String!
   size: String
   weight: String
-  allAttributes: [AmazonProductAttribute]
+  attributes: [AmazonProductAttribute]
 }
 
 type Attribute {
   id: ID!
   value: String!
-  allAmazonProducts: [AmazonProductAttribute]
+  AmazonProducts: [AmazonProductAttribute]
 }
 
 type AmazonProductAttribute {
-  attribute_id: ID!
-  amazon_product_id: ID!
+  AttributeId: ID!
+  AmazonProductId: ID!
   attribute: Attribute
   amazonProduct: AmazonProduct
 }
