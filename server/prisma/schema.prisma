@@ -12,8 +12,12 @@ model AmazonProduct {
   createdAt  DateTime    @default(now())
   asin       String      @unique
   name       String
-  size       String
-  weight     String
+  size_length Float
+  size_width Float
+  size_height Float
+  size_units String
+  weight Float
+  weight_units String
   attributes AmazonProductAttribute[]
 }
 
