@@ -1,5 +1,5 @@
 # Getting started with the project
-> Questions: Feel free to contact Atharva Kashyap (atharva2@uw.edu)
+> Questions??: Feel free to contact Atharva Kashyap (atharva2@uw.edu)
 
 ## How to get the project onto local machine and run the app?
 
@@ -23,3 +23,7 @@ For Your Information: graphql playground is something that runs on `localhost:40
 2. If you make any edits to `schema.prisma`, it is important to run `prisma migrate dev --name <give-your-migration-a-name>`. This is because you made some edits to your database and you want those changes to be reflected. 
 3. The column names of models that you define in your schema must be exactly same as the models you define in your `graphql.schema`. In other words, the column names that you have for your prisma table needs to be exactly the same as the column names that you give to your graphql schema. 
 4. *Extra (high-level) information about how the server side of things are working*: graphql serves to provide a "front-end" experience, which means this is what you use in the reactapp to query and get information from. graphql then contacts prisma through a mode called `resolvers.js`, which then contacts the database to obtain the data. 
+
+## How to query the database from Python?
+Here is the link to the Schema file: ...
+Coming Soon...
