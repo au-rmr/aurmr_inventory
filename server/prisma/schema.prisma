@@ -19,6 +19,7 @@ model AmazonProduct {
   weight Float
   weight_units String
   attributes AmazonProductAttribute[]
+  picks Picks[]
 }
 
 model Attribute {
@@ -34,4 +35,12 @@ model AmazonProductAttribute {
   amazonProduct AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
 
   @@id([AttributeId, AmazonProductId])
+}
+
+model Picks {
+  id Int @id @default(autoincrement())
+  AmazonProduct AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
+  AmazonProductId Int
+  Outcome Boolean
+  TimeTakenSec Float
 }

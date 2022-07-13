@@ -9,7 +9,8 @@ module.exports = {
                         include: {
                             attribute: true
                         }
-                    }
+                    }, 
+                    picks: true
                 }
             })
         },
@@ -211,6 +212,23 @@ module.exports = {
             const transaction = context.prisma.$transaction([delRelation, delAttr])
 
             return transaction
+        },
+
+        addPick: async (_, args, context, info) => {
+            const updateProd = context.prisma.amazonProduct.update({
+                where: {
+                    asin: args.asin
+                },
+                data: {
+                    picks: {
+                        create: {
+                            Outcome: args.Outcome,
+                            TimeTakenSec: args.TimeTakenSec,
+                        }
+                    }
+                }
+            })
+            return updateProd
         }
     },
 
