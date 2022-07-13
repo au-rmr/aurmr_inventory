@@ -1,14 +1,29 @@
 type Query {
   getAllProducts: [AmazonProduct]
+
   getProduct(filter: String): [AmazonProduct!]!
+
   getAllAttributes: [Attribute]
+
+  filterProdByAttr(attributes: [ID!]): [AmazonProduct!]!
 }
 
 type Mutation {
   addAmazonProduct(asin: String!, name: String!, size_length: Float, size_width: Float, size_height: Float, size_units: String, weight: Float, weight_units: String, attributes: [ID]): AmazonProduct!
+
   addAttribute(value: String!): Attribute!
+
   addAttributeToProduct(asin: String!, attribute: ID): AmazonProduct!
+
   deleteAttributeFromProduct(asin: String!, attribute: ID): AmazonProduct!
+
+  updateSize(asin: String!, size_length: Float!, size_width: Float!, size_height: Float!, size_units: String!): AmazonProduct!
+
+  updateWeight(asin: String!, weight: Float!, weight_units: String!): AmazonProduct!
+
+  deleteProduct(asin: String!): AmazonProduct
+
+  deleteAttribute(attribute: ID!): AmazonProduct
 }
 
 type AmazonProduct {
