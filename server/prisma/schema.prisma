@@ -19,7 +19,7 @@ model AmazonProduct {
   weight Float
   weight_units String
   attributes AmazonProductAttribute[]
-  picks Picks[]
+  picks Pick[]
 }
 
 model Attribute {
@@ -37,7 +37,7 @@ model AmazonProductAttribute {
   @@id([AttributeId, AmazonProductId])
 }
 
-model Picks {
+model Pick {
   id Int @id @default(autoincrement())
   AmazonProduct AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
   AmazonProductId Int

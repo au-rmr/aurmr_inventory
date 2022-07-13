@@ -25,7 +25,7 @@ type Mutation {
 
   deleteAttribute(attribute: ID!): AmazonProduct
 
-  addPick(asin: String!, Outcome: Boolean, TimeTakenSec: Float): Picks!
+  addPick(asin: String!, Outcome: Boolean, TimeTakenSec: Float): Pick!
 }
 
 type AmazonProduct {
@@ -39,7 +39,7 @@ type AmazonProduct {
   weight: Float
   weight_units: String
   attributes: [AmazonProductAttribute]
-  picks: [Picks]
+  picks: [Pick]
 }
 
 type Attribute {
@@ -55,7 +55,7 @@ type AmazonProductAttribute {
   amazonProduct: AmazonProduct
 }
 
-type Picks {
+type Pick {
   id: ID!
   AmazonProduct: AmazonProduct!
   AmazonProductId: ID!
