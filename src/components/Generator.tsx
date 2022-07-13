@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 interface GeneratorProps {
-    onChange(objects: number): any;
+    onChange(objects: number, filtered: string[]): any;
     objectList: string[];
     filterList: string[];
 }
@@ -18,7 +18,7 @@ function Generator(props:GeneratorProps) {
             alert("Invalid entry please enter numbers between 0-100.");
             return;
         }
-        props.onChange(num);
+        props.onChange(num, checkedList);
     }
 
     const handleCheckboxChange = (attribute: string) => {

@@ -4,6 +4,7 @@ import _ from 'lodash';
 interface TableProps {
     numObjects: number;
     objectList: string[];
+    checkedList: string[];
 }
 
 function Table(props:TableProps) {

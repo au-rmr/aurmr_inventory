@@ -22,11 +22,8 @@ const ALL_PROD_QUERY = gql`
 `;
 
 function Evaluator() {
-    const [numObjects,setNumObjects] = useState<number>(0);
-    
-    const setObjects = (value: number) => {
-        setNumObjects(value);
-    }
+    const [numObjects, setNumObjects] = useState<number>(0);
+    const [checkedBoxes, setCheckedBoxes] = useState<string[]>([]);
 
     const {data: attData, loading: attLoading, error: attError} = useQuery(ATT_QUERY);
     const {data: prodData, loading: prodLoading, error: prodError} = useQuery(ALL_PROD_QUERY);
@@ -49,14 +46,16 @@ function Evaluator() {
     
     return (
         <div id="main">
-            <Generator onChange={(x:number) => {
-                setObjects(x);
+            <Generator onChange={(x:number, y: string[]) => {
+                setNumObjects(x);
+                setCheckedBoxes(y);
             }}
                     objectList={prodList}
                     filterList={attributeList}/>
 
             <Table numObjects={numObjects}
                     objectList={prodList}
+                    checkedList={checkedBoxes}
             />
         </div>
     );
