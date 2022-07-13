@@ -22,12 +22,20 @@ function Table(props:TableProps) {
         let numObjectsCopy = props.numObjects;
         let evenSplit: number[] = [];
         let contents: string[][] = [[]];
-
-        while(numObjectsCopy > 0) {
-            const truncatedDivision = Math.floor(numObjectsCopy/numBins);
-            evenSplit.push(truncatedDivision);
-            numObjectsCopy -= truncatedDivision;
-            numBins--;
+        if (numObjectsCopy > numBins) {
+            while (numObjectsCopy > 0) {
+                const truncatedDivision = Math.floor(numObjectsCopy/numBins);
+                evenSplit.push(truncatedDivision);
+                numObjectsCopy -= truncatedDivision;
+                numBins--;
+            }
+            console.log("entered");
+        }
+        else {
+            while(numObjectsCopy > 0) {
+                evenSplit.push(1);
+                numObjectsCopy--;
+            }
         }
         numObjectsCopy = props.numObjects;
 
