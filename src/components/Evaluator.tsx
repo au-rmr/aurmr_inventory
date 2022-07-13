@@ -2,7 +2,6 @@ import './../styles/App.css';
 import Generator from './Generator';
 import { useState } from 'react';
 import Table from "./Table";
-import { graphql } from 'react-apollo'
 import { gql } from 'graphql-tag';
 import { useQuery } from '@apollo/client';
 
@@ -29,26 +28,35 @@ function Evaluator() {
         setNumObjects(value);
     }
 
-    const {data, loading, error} = useQuery(ATT_QUERY);
-    
-    if (loading) return <p>Loading</p>;
-    if (error) return <p>Error: {error.message}</p>
+    const {data: attData, loading: attLoading, error: attError} = useQuery(ATT_QUERY);
+    const {data: prodData, loading: prodLoading, error: prodError} = useQuery(ALL_PROD_QUERY);
+
+    if (attLoading) return <p>Loading</p>;
+    if (attError) return <p>Error: {attError.message}</p>
 
     let attributeList: string[] = [];
-    for (let i = 0; i < Object.keys(data.getAllAttributes).length; i++) {
-        attributeList.push(data.getAllAttributes[i].value);
+    for (let i = 0; i < Object.keys(attData.getAllAttributes).length; i++) {
+        attributeList.push(attData.getAllAttributes[i].value);
     }
-    console.log(data, Object.keys(data.getAllAttributes));
+
+    if (prodLoading) return <p>Loading</p>;
+    if (prodError) return <p>Error: {prodError.message}</p>
+
+    let prodList: string[] = [];
+    for (let i = 0; i < Object.keys(prodData.getAllProducts).length; i++) {
+        prodList.push(prodData.getAllProducts[i].name);
+    }
+    
     return (
         <div id="main">
             <Generator onChange={(x:number) => {
                 setObjects(x);
             }}
-                    objectList={["A", "B", "C", "D"]}
+                    objectList={prodList}
                     filterList={attributeList}/>
 
             <Table numObjects={numObjects}
-                    objectList={["A", "B", "C", "D"]}
+                    objectList={prodList}
             />
         </div>
     );
