@@ -1,40 +1,58 @@
 import './../styles/App.css';
 import Generator from './Generator';
-import React, {Component} from 'react';
+import { useState } from 'react';
 import Table from "./Table";
+import { graphql } from 'react-apollo'
+import { gql } from 'graphql-tag';
+import { useQuery } from '@apollo/client';
 
-interface AppState {
-    numObjects: number;
-}
-
-class Evaluator extends Component<{}, AppState>{
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            numObjects: 0
-        };
+const ATT_QUERY = gql`
+  query {
+    getAllAttributes{
+        value
     }
-    setObjects(value: number) {
-        this.setState({
-            numObjects: value
-        })
+  }
+`;
+
+const ALL_PROD_QUERY = gql`
+    query {
+        getAllProducts{
+            name
+        }
+    }
+`;
+
+function Evaluator() {
+    const [numObjects,setNumObjects] = useState<number>(0);
+    
+    const setObjects = (value: number) => {
+        setNumObjects(value);
     }
 
-    render() {
-        return (
-            <div id="main">
-                <Generator onChange={(x) => {
-                    this.setObjects(x);
-                }}
-                           objectList={["A", "B", "C", "D"]}
-                           filterList={["Deformable", "Small", "Large"]}/>
+    const {data, loading, error} = useQuery(ATT_QUERY);
+    
+    if (loading) return <p>Loading</p>;
+    if (error) return <p>Error: {error.message}</p>
 
-                <Table numObjects={this.state.numObjects}
-                       objectList={["A", "B", "C", "D"]}
-                />
-            </div>
-        );
+    let attributeList: string[] = [];
+    for (let i = 0; i < Object.keys(data.getAllAttributes).length; i++) {
+        attributeList.push(data.getAllAttributes[i].value);
     }
+    console.log(data, Object.keys(data.getAllAttributes));
+    return (
+        <div id="main">
+            <Generator onChange={(x:number) => {
+                setObjects(x);
+            }}
+                    objectList={["A", "B", "C", "D"]}
+                    filterList={attributeList}/>
+
+            <Table numObjects={numObjects}
+                    objectList={["A", "B", "C", "D"]}
+            />
+        </div>
+    );
     
 }
+
 export default Evaluator;

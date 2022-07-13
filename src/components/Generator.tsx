@@ -1,43 +1,28 @@
-import React, { Component } from 'react';
+import { useState } from 'react';
 
 interface GeneratorProps {
-    onChange(objects: number): void;
+    onChange(objects: number): any;
     objectList: string[];
     filterList: string[];
 }
 
-interface GeneratorState {
-    textArea: string;
-    checkedList: string[]
-}
+function Generator(props:GeneratorProps) {
+    const [textArea, setTextArea] = useState<string>('80');
+    const [checkedList, setCheckedList] = useState<string[]>([]);
 
-class Generator extends Component<GeneratorProps,GeneratorState> {
-
-    constructor(props: GeneratorProps) {
-        super(props);
-        this.state = {
-            textArea: "80",
-            checkedList: []
-        };
-    }
-
-    textAreaOnChange(event: any) {
-        this.setState({
-            textArea: event.target.value
-        })
-    }
-
-    parseNumBins(str: string) {
-        let num = parseInt(str as string);
+    const parseNumBins = () => {
+        console.log(textArea);
+        let num = parseInt(textArea as string);
+        console.log(num);
         if (isNaN(num) || num < 0 || num > 100) {
             alert("Invalid entry please enter numbers between 0-100.");
             return;
         }
-        this.props.onChange(num);
+        props.onChange(num);
     }
 
-    handleCheckboxChange = (attribute: string) => {
-        let sel = this.state.checkedList;
+    const handleCheckboxChange = (attribute: string) => {
+        let sel : string[] = checkedList;
         const find = sel.indexOf(attribute);
         if (find > -1) {
             sel.splice(find, 1);
@@ -46,41 +31,36 @@ class Generator extends Component<GeneratorProps,GeneratorState> {
             sel.push(attribute);
         }
 
-        this.setState({
-            checkedList: sel
-        })
+        setCheckedList(sel);
+        console.log(checkedList);
     }
 
-    
-    render() {
-        return (
-            <>
-                <div id = "num-bins">
-                    <div id="text">Number of objects:</div>
-                    <textarea
-                        id="text-area"
-                        rows={5}
-                        cols={30}
-                        onChange={(event) => this.textAreaOnChange(event)}
-                        value={this.state.textArea}
-                    /> <br/>
-                    <button id="submit-button" onClick={() => {this.parseNumBins(this.state.textArea)}}>Submit</button>
+    return (
+        <>
+            <div id = "num-bins">
+                <div id="text">Number of objects:</div>
+                <textarea
+                    id="text-area"
+                    rows={5}
+                    cols={30}
+                    onChange={(event) => setTextArea(event.target.value)}
+                    value={textArea}
+                /> <br/>
+            </div>
+            <button id="submit-button" onClick={parseNumBins}>Submit</button>
 
-                    
-                </div>
-                {
-                    this.props.filterList &&
-                    this.props.filterList.map((name) => <div id="filter"><input
-                        type="checkbox"
-                        value={name}
-                        checked={this.state.checkedList.includes(name)}
-                        onChange={() => this.handleCheckboxChange(name)}
-                    /> {name} <br/></div>)
-                }
-            </>
-        );
-    }
-    
+            {
+                props.filterList &&
+                props.filterList.map((name:string) => <div id="filter" key={Math.random()}><input
+                    type="checkbox"
+                    value={name}
+                    checked={checkedList.includes(name)}
+                    onChange={() => handleCheckboxChange(name)}
+                /> {name} <br/></div>)
+            }
+        </>
+    );
+
 }
 
 export default Generator;

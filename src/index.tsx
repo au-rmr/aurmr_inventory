@@ -1,4 +1,5 @@
 import React from 'react';
+import * as ReactDOMClient from 'react-dom/client';
 import ReactDOM from 'react-dom';
 import './styles/index.css';
 import App from './components/App';
@@ -9,19 +10,19 @@ import {
   ApolloProvider,
   ApolloClient,
   createHttpLink,
-  InMemoryCache
+  InMemoryCache,
+  gql,
+  useQuery,
+  NormalizedCacheObject
 } from '@apollo/client';
 
-// 2
-const httpLink = createHttpLink({
+
+// 3
+const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
+  cache: new InMemoryCache(),
   uri: 'http://localhost:4000'
 });
 
-// 3
-const client = new ApolloClient({
-  link: httpLink,
-  cache: new InMemoryCache()
-});
 
 // 4
 ReactDOM.render(
