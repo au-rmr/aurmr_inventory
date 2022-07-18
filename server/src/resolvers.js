@@ -50,24 +50,20 @@ module.exports = {
         filterProdByAttr: (_, args, context) => {
             console.log(args.attributes)
             const where = args.attributes ? {
-                OR: args.attributes.map(attrId => [{
-                    attributes: {
-                        attribute: { equals: parseInt(attrId) }
-                    }
-                }])
+                OR: args.attributes.map(attrId => ({ id: { equals: parseInt(attrId) } }),),
             }
                 : {}
-            const prods = context.prisma.amazonProduct.findMany({
+            const allProds = context.prisma.attribute.findMany({
                 where,
                 include: {
-                    attributes: {
+                    AmazonProducts: {
                         include: {
-                            attribute: true
+                            amazonProduct: true
                         }
                     }
                 }
             })
-            return prods
+            return allProds
         }
     },
 
