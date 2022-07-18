@@ -6,6 +6,10 @@ type Query {
   getAllAttributes: [Attribute]
 
   filterProdByAttr(attributes: [ID!]): [AmazonProduct!]!
+
+  getAllEvals: [Evaluation]
+
+  getAllBins: [Bin]
 }
 
 type Mutation {
@@ -26,6 +30,12 @@ type Mutation {
   deleteAttribute(attribute: ID!): AmazonProduct
 
   addPick(asin: String!, Outcome: Boolean, TimeTakenSec: Float): Pick!
+
+  addEval(name: String!): Evaluation!
+
+  createBin(BinId: String!): Bin!
+
+  addProdToBin(asin: String!, binId: String!, evalName: String!): ProductBin!
 }
 
 type AmazonProduct {
@@ -40,6 +50,7 @@ type AmazonProduct {
   weight_units: String
   attributes: [AmazonProductAttribute]
   picks: [Pick]
+  bins: [ProductBin]
 }
 
 type Attribute {
@@ -61,4 +72,28 @@ type Pick {
   AmazonProductId: ID!
   Outcome: Boolean
   TimeTakenSec: Float
+  evalId: ID
+  evaluation: Evaluation
+}
+
+type Bin {
+  id: ID!
+  BinId: String! 
+  AmazonProducts: [ProductBin]
+}
+
+type ProductBin {
+  AmazonProductId: ID!
+  binId: String!
+  evalId: ID!
+  amazonProduct: AmazonProduct
+  bin: Bin
+  evaluation: Evaluation
+}
+
+type Evaluation {
+  id: ID!
+  name: String!
+  Setup: [ProductBin]
+  picks: [Pick]
 }

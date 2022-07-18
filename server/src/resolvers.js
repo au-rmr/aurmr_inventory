@@ -69,7 +69,26 @@ module.exports = {
                 }
             })
             return prods
-        }
+        }, 
+
+        getAllEvals: (_, args, context) => {
+            const evals = context.prisma.evaluation.findMany({})
+            return evals
+        }, 
+
+        getAllBins: (_, args, context) => {
+            const bins = context.prisma.bin.findMany({
+                include: {
+                    AmazonProducts: {
+                        include: {
+                            amazonProduct: true
+                        }
+                    }
+                }
+            })
+            return bins
+        }, 
+
     },
 
     Mutation: {
@@ -229,7 +248,46 @@ module.exports = {
                 }
             })
             return updateProd
-        }
+        }, 
+
+        addEval: async (_, args, context, info) => {
+            const addeval = context.prisma.evaluation.create({
+                data: {
+                    name: args.name, 
+                }
+            })
+            return addeval
+        }, 
+
+        createBin: async (_, args, context, info) => {
+            const addBin = context.prisma.bin.create({
+                data: {
+                    BinId: args.BinId
+                }
+            })
+            return addBin
+        }, 
+
+        addProdToBin: async (_, args, context, info) => {
+            const prodToBin = context.prisma.productBin.create({
+                data: {
+                    AmazonProductId: parseInt((await context.prisma.amazonProduct.findMany({
+                        where: {
+                            asin: args.asin
+                        }
+                    }))[0].id), 
+                    binId: args.binId, 
+                    evalId: parseInt((await context.prisma.evaluation.findMany({
+                        where: {
+                            name: args.evalName
+                        }
+                    }))[0].id)
+                }
+            })
+            return prodToBin
+        }, 
+
+
     },
 
     AmazonProduct: {
@@ -248,4 +306,6 @@ module.exports = {
         id: (parent) => parent.id,
         value: (parent) => parent.value,
     },
+
+    
 }

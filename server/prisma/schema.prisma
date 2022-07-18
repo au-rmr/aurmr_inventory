@@ -8,39 +8,66 @@ generator client {
 }
 
 model AmazonProduct {
-  id         Int         @id @default(autoincrement())
-  createdAt  DateTime    @default(now())
-  asin       String      @unique
-  name       String
-  size_length Float
-  size_width Float
-  size_height Float
-  size_units String
-  weight Float
+  id           Int                      @id @default(autoincrement())
+  createdAt    DateTime                 @default(now())
+  asin         String                   @unique
+  name         String
+  size_length  Float
+  size_width   Float
+  size_height  Float
+  size_units   String
+  weight       Float
   weight_units String
-  attributes AmazonProductAttribute[]
-  picks Pick[]
+  attributes   AmazonProductAttribute[]
+  picks        Pick[]
+  bins         ProductBin[]
 }
 
 model Attribute {
-  id              Int            @id @default(autoincrement())
-  value           String         @unique
-  AmazonProducts   AmazonProductAttribute[]
+  id             Int                      @id @default(autoincrement())
+  value          String                   @unique
+  AmazonProducts AmazonProductAttribute[]
 }
 
-model AmazonProductAttribute { 
-  AttributeId Int 
-  AmazonProductId Int 
-  attribute Attribute? @relation(fields: [AttributeId], references: [id])
-  amazonProduct AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
+model AmazonProductAttribute {
+  AttributeId     Int
+  AmazonProductId Int
+  attribute       Attribute?     @relation(fields: [AttributeId], references: [id])
+  amazonProduct   AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
 
   @@id([AttributeId, AmazonProductId])
 }
 
 model Pick {
-  id Int @id @default(autoincrement())
-  AmazonProduct AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
+  id              Int            @id @default(autoincrement())
+  AmazonProduct   AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
   AmazonProductId Int
-  Outcome Boolean
-  TimeTakenSec Float
+  Outcome         Boolean
+  TimeTakenSec    Float
+  evalId          Int
+  evaluation      Evaluation?    @relation(fields: [evalId], references: [id])
+}
+
+model Bin {
+  id             Int            @id @default(autoincrement())
+  BinId          String         @unique
+  AmazonProducts ProductBin[]
+}
+
+model ProductBin {
+  AmazonProductId Int
+  binId        String
+  evalId          Int
+  amazonProduct   AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
+  bin             Bin?           @relation(fields: [binId], references: [BinId])
+  evaluation      Evaluation?    @relation(fields: [evalId], references: [id])
+
+  @@id([AmazonProductId, binId, evalId])
+}
+
+model Evaluation {
+  id    Int            @id @default(autoincrement())
+  name  String         @unique
+  Setup ProductBin[]
+  picks Pick[]
 }
