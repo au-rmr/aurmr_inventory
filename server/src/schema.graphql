@@ -5,7 +5,7 @@ type Query {
 
   getAllAttributes: [Attribute]
 
-  filterProdByAttr(attributes: [ID!]): [AmazonProduct!]!
+  filterProdByAttr(attributes: [ID!]): [Attribute!]!
 }
 
 type Mutation {
