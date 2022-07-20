@@ -12,14 +12,13 @@ model AmazonProduct {
   createdAt    DateTime                 @default(now())
   asin         String                   @unique
   name         String
-  size_length  Float
-  size_width   Float
-  size_height  Float
-  size_units   String
-  weight       Float
-  weight_units String
+  size_length  Float?
+  size_width   Float?
+  size_height  Float?
+  size_units   String?
+  weight       Float?
+  weight_units String?
   attributes   AmazonProductAttribute[]
-  picks        Pick[]
   bins         ProductBin[]
 }
 
@@ -40,12 +39,10 @@ model AmazonProductAttribute {
 
 model Pick {
   id              Int            @id @default(autoincrement())
-  AmazonProduct   AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
-  AmazonProductId Int
-  Outcome         Boolean
-  TimeTakenSec    Float
-  evalId          Int
-  evaluation      Evaluation?    @relation(fields: [evalId], references: [id])
+  ProductBinId Int
+  ProductFromBin ProductBin @relation(fields: [ProductBinId], references: [id])
+  Outcome         Boolean?
+  TimeTakenSec    Float?
 }
 
 model Bin {
@@ -55,19 +52,18 @@ model Bin {
 }
 
 model ProductBin {
+  id Int @id @default(autoincrement())
   AmazonProductId Int
   binId        String
   evalId          Int
   amazonProduct   AmazonProduct? @relation(fields: [AmazonProductId], references: [id])
   bin             Bin?           @relation(fields: [binId], references: [BinId])
   evaluation      Evaluation?    @relation(fields: [evalId], references: [id])
-
-  @@id([AmazonProductId, binId, evalId])
+  picks Pick[]
 }
 
 model Evaluation {
   id    Int            @id @default(autoincrement())
   name  String         @unique
   Setup ProductBin[]
-  picks Pick[]
 }

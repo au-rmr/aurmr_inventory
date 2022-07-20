@@ -9,8 +9,7 @@ module.exports = {
                         include: {
                             attribute: true
                         }
-                    }, 
-                    picks: true
+                    },
                 }
             })
         },
@@ -51,33 +50,11 @@ module.exports = {
         filterProdByAttr: (_, args, context) => {
             console.log(args.attributes)
             const where = args.attributes ? {
-                OR: args.attributes.map(attrId => [{
-                    attributes: {
-                        attribute: { equals: parseInt(attrId) }
-                    }
-                }])
+                OR: args.attributes.map(attrId => ({ id: { equals: parseInt(attrId) } }),),
             }
                 : {}
-            const prods = context.prisma.amazonProduct.findMany({
+            const allProds = context.prisma.attribute.findMany({
                 where,
-                include: {
-                    attributes: {
-                        include: {
-                            attribute: true
-                        }
-                    }
-                }
-            })
-            return prods
-        }, 
-
-        getAllEvals: (_, args, context) => {
-            const evals = context.prisma.evaluation.findMany({})
-            return evals
-        }, 
-
-        getAllBins: (_, args, context) => {
-            const bins = context.prisma.bin.findMany({
                 include: {
                     AmazonProducts: {
                         include: {
@@ -86,8 +63,53 @@ module.exports = {
                     }
                 }
             })
+            return allProds
+        },
+
+        getAllEvals: (_, args, context) => {
+            const evals = context.prisma.evaluation.findMany({
+                include: {
+                    Setup: {
+                        include: {
+                            amazonProduct: true,
+                            bin: true,
+                            picks: {
+                                include: {
+                                    ProductFromBin: {
+                                        include: {
+                                            amazonProduct: true, 
+                                            bin: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+            return evals
+        },
+
+        getAllBins: (_, args, context) => {
+            const bins = context.prisma.bin.findMany({
+                include: {
+                    AmazonProducts: {
+                        include: {
+                            amazonProduct: {
+                                include: {
+                                    bins: {
+                                        include: {
+                                            evaluation: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
             return bins
-        }, 
+        },
 
     },
 
@@ -234,30 +256,37 @@ module.exports = {
         },
 
         addPick: async (_, args, context, info) => {
-            const updateProd = context.prisma.amazonProduct.update({
-                where: {
-                    asin: args.asin
-                },
+            const addPick = context.prisma.pick.create({
                 data: {
-                    picks: {
-                        create: {
-                            Outcome: args.Outcome,
-                            TimeTakenSec: args.TimeTakenSec,
+                    Outcome: args.Outcome,
+                    TimeTakenSec: args.TimeTakenSec,
+                    ProductFromBin: {
+                        connect: {
+                            id: args.ProductBinId
+                        }
+                    }
+                }, 
+                include: {
+                    ProductFromBin: {
+                        include: {
+                            amazonProduct: true,
+                            bin: true,
+                            evaluation: true
                         }
                     }
                 }
             })
-            return updateProd
-        }, 
+            return addPick
+        },
 
         addEval: async (_, args, context, info) => {
             const addeval = context.prisma.evaluation.create({
                 data: {
-                    name: args.name, 
+                    name: args.name,
                 }
             })
             return addeval
-        }, 
+        },
 
         createBin: async (_, args, context, info) => {
             const addBin = context.prisma.bin.create({
@@ -266,26 +295,38 @@ module.exports = {
                 }
             })
             return addBin
-        }, 
+        },
 
         addProdToBin: async (_, args, context, info) => {
             const prodToBin = context.prisma.productBin.create({
                 data: {
-                    AmazonProductId: parseInt((await context.prisma.amazonProduct.findMany({
-                        where: {
+                    amazonProduct: {
+                        connect: {
                             asin: args.asin
                         }
-                    }))[0].id), 
-                    binId: args.binId, 
-                    evalId: parseInt((await context.prisma.evaluation.findMany({
-                        where: {
-                            name: args.evalName
+                    },
+                    bin: {
+                        connect: {
+                            BinId: args.binId
                         }
-                    }))[0].id)
+                    },
+                    evaluation: {
+                        connectOrCreate: {
+                            where: {
+                                name: args.evalName
+                            },
+                            create: {
+                                name: args.evalName
+                            }
+                        }
+                    }
+                },
+                include: {
+                    bin: true
                 }
             })
             return prodToBin
-        }, 
+        },
 
 
     },
@@ -307,5 +348,5 @@ module.exports = {
         value: (parent) => parent.value,
     },
 
-    
+
 }
