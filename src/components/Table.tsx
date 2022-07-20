@@ -1,5 +1,4 @@
 import './../styles/App.css';
-import { randomlyAssignObjects } from './AssignmentAlgorithm';
 
 interface TableProps {
     contents: string[][];

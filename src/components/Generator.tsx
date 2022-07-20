@@ -1,38 +1,39 @@
 import { useState } from 'react';
 
 interface GeneratorProps {
-    onChange(objects: number, filtered: string[]): any;
-    objectList: string[];
-    filterList: string[];
+    onChange(objects: number, filtered: number[]): any;
+    filterList: any[];
 }
 
 function Generator(props:GeneratorProps) {
-    const [textArea, setTextArea] = useState<string>('80');
-    const [checkedList, setCheckedList] = useState<string[]>([]);
+    const [textArea, setTextArea] = useState<string>('');
+    const [checkedState, setCheckedState] = useState(
+        new Array(props.filterList.length).fill(false)
+      );
 
     const parseNumBins = () => {
-        console.log(textArea);
+        console.log(textArea, "ta");
         let num = parseInt(textArea as string);
         console.log(num);
         if (isNaN(num) || num < 0 || num > 100) {
             alert("Invalid entry please enter numbers between 0-100.");
             return;
         }
+
+        let checkedList: number[] = [];
+        for (let i = 0; i < checkedState.length; i++) {
+            if (checkedState[i]) {
+                checkedList.push(props.filterList[i].id);
+            }
+        }
         props.onChange(num, checkedList);
     }
 
-    const handleCheckboxChange = (attribute: string) => {
-        let sel : string[] = checkedList;
-        const find = sel.indexOf(attribute);
-        if (find > -1) {
-            sel.splice(find, 1);
-        }
-        else {
-            sel.push(attribute);
-        }
-
-        setCheckedList(sel);
-        console.log(checkedList);
+    const handleOnChange = (position: number) => {
+        const updatedCheckedState = checkedState.map((item, index) => 
+            index === position ? !item : item
+        );
+        setCheckedState(updatedCheckedState);
     }
 
     return (
@@ -48,16 +49,21 @@ function Generator(props:GeneratorProps) {
                 /> <br/>
             </div>
             <button id="submit-button" onClick={parseNumBins}>Submit</button>
-
-            {
-                props.filterList &&
-                props.filterList.map((name:string) => <div id="filter" key={Math.random()}><input
-                    type="checkbox"
-                    value={name}
-                    checked={checkedList.includes(name)}
-                    onChange={() => handleCheckboxChange(name)}
-                /> {name} <br/></div>)
-            }
+            
+            {props.filterList.map((att, index) => {
+                return (
+                    <div id="filter" key={att.id}>
+                        <input
+                        type="checkbox"
+                        id={`id-${index}`}
+                        name={att.value}
+                        value={att.value}
+                        checked={checkedState[index]}
+                        onChange={() => handleOnChange(index)}
+                        /> {att.value}
+                    </div>
+                )
+            })}
         </>
     );
 
