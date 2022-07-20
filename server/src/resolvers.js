@@ -223,13 +223,24 @@ module.exports = {
                     }))[0].id)
                 }
             })
-            const delProd = context.prisma.amazonProduct.delete({
+
+            const delRelationBin = context.prisma.productBin.deleteMany({
+                where: {
+                    AmazonProductId: parseInt((await context.prisma.amazonProduct.findMany({
+                        where: {
+                            asin: args.asin
+                        }
+                    }))[0].id)
+                }
+            })
+
+            const delAttr = context.prisma.amazonProduct.delete({
                 where: {
                     asin: args.asin
                 }
             })
 
-            const transaction = context.prisma.$transaction([delRelation, delProd])
+            const transaction = context.prisma.$transaction([delRelation, delRelationBin, delAttr])
 
             return transaction
         },
