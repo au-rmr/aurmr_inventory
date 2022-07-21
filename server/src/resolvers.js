@@ -302,7 +302,10 @@ module.exports = {
         createBin: async (_, args, context, info) => {
             const addBin = context.prisma.bin.create({
                 data: {
-                    BinId: args.BinId
+                    BinId: args.BinId,
+                    BinName: args.BinName,
+                    TableId: args.TableId,
+                    TableName: args.TableName
                 }
             })
             return addBin
