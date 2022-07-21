@@ -15,14 +15,6 @@ const ATT_QUERY = gql`
   }
 `;
 
-// const ALL_PROD_QUERY = gql`
-//     query {
-//         getAllProducts{
-//             name
-//         }
-//     }
-// `;
-
 const FILTER_BY_ATT_QUERY = gql`
     query filterByAttr($checkedBoxes:[ID!]) {
         filterProdByAttr(attributes:$checkedBoxes) {
@@ -41,15 +33,6 @@ function Evaluator() {
     const [contents, setContents] = useState<string[][]>([[]]);
     const [numberOfObjects, setNumberOfObjects] = useState<number>(0);
     const shelfDimensions: number[] = [13, 4];
-
-    // const {data: prodData, loading: prodLoading, error: prodError} = useQuery(ALL_PROD_QUERY);
-    // if (prodLoading) return <p>Loading</p>;
-    // if (prodError) return <p>Error: {prodError.message}</p>
-
-    // let prodList: string[] = [];
-    // for (let i = 0; i < Object.keys(prodData.getAllProducts).length; i++) {
-    //     prodList.push(prodData.getAllProducts[i].name);
-    // }
 
     let attributeList: any[] = [];
     let filtList = new Set<string>();
@@ -81,11 +64,9 @@ function Evaluator() {
     }
 
     function fetchData() {
-        console.log("entered");
         if (filtData !== undefined) {
             if (filtLoading) return <p>Loading</p>;
             if (filtError) return <p>Error: {filtError.message}</p>
-            console.log(filtData, "fd");
             for (let i = 0; i < Object.keys(filtData.filterProdByAttr).length; i++) {
                 for (let j = 0; j < Object.keys(filtData.filterProdByAttr[i].AmazonProducts).length; j++) {
                     filtList.add(filtData.filterProdByAttr[i].AmazonProducts[j].amazonProduct.name);

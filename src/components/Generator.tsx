@@ -13,7 +13,6 @@ function Generator(props:GeneratorProps) {
 
     const parseNumBins = () => {
         let num = parseInt(textArea as string);
-        console.log(num);
         if (isNaN(num) || num < 0 || num > 100) {
             alert("Invalid entry please enter numbers between 0-100.");
             return;
@@ -25,7 +24,6 @@ function Generator(props:GeneratorProps) {
                 checkedList.push(props.filterList[i].id);
             }
         }
-        console.log(checkedList, "gen");
         props.onChange(num, checkedList);
     }
 
