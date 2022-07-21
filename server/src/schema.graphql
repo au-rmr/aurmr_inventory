@@ -33,7 +33,7 @@ type Mutation {
 
   addEval(name: String!): Evaluation!
 
-  createBin(BinId: String!): Bin!
+  createBin(BinId: String!, BinName: String!, TableId: String!, TableName: String): Bin!
 
   addProdToBin(asin: String!, binId: String!, evalName: String!): ProductBin!
 }
@@ -76,6 +76,9 @@ type Pick {
 type Bin {
   id: ID!
   BinId: String! 
+  BinName: String!
+  TableId: String!
+  TableName: String
   AmazonProducts: [ProductBin]
 }
 
