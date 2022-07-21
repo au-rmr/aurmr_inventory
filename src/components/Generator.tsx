@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 interface GeneratorProps {
-    onChange(objects: number, filtered: number[]): any;
+    onChange: (objects: number, filtered: number[]) => void
     filterList: any[];
 }
 
@@ -12,7 +12,6 @@ function Generator(props:GeneratorProps) {
       );
 
     const parseNumBins = () => {
-        console.log(textArea, "ta");
         let num = parseInt(textArea as string);
         console.log(num);
         if (isNaN(num) || num < 0 || num > 100) {
@@ -26,6 +25,7 @@ function Generator(props:GeneratorProps) {
                 checkedList.push(props.filterList[i].id);
             }
         }
+        console.log(checkedList, "gen");
         props.onChange(num, checkedList);
     }
 
