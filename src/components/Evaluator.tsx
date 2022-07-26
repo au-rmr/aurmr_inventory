@@ -21,6 +21,13 @@ const FILTER_BY_ATT_QUERY = gql`
             AmazonProducts {
                 amazonProduct {
                     name
+                    asin
+                    size_length
+                    size_width
+                    size_height
+                    size_units
+                    weight
+                    weight_units
                 }
             }
             value
@@ -46,14 +53,14 @@ function Evaluator() {
     
     useEffect(() => {
         fetchData();
-        setContents(randomlyAssignObjects(shelfDimensions[0]*shelfDimensions[1], numberOfObjects, Array.from(filtList)));
+        setContents(randomlyAssignObjects(shelfDimensions[0]*shelfDimensions[1], numberOfObjects, (Array.from(filtList)).map((x: any) => x.name)));
     }, [filtData, numberOfObjects]);
 
     const callback = (numObjects: number, checked: number[]) => {
         setCheckedBoxes(checked);
         setNumberOfObjects(numObjects);
         fetchData();
-        setContents(randomlyAssignObjects(shelfDimensions[0]*shelfDimensions[1], numberOfObjects, Array.from(filtList)));
+        setContents(randomlyAssignObjects(shelfDimensions[0]*shelfDimensions[1], numberOfObjects, (Array.from(filtList)).map((x: any) => x.name)));
     }
     
     if (attLoading) return <p>Loading</p>;
@@ -64,23 +71,29 @@ function Evaluator() {
     }
 
     function fetchData() {
+        //if no boxes are checked show objects with all attributes
+        if (checkedBoxes.length == 0) {
+            setCheckedBoxes(attributeList.map((x) => x.id));
+        }
         if (filtData !== undefined) {
             if (filtLoading) return <p>Loading</p>;
             if (filtError) return <p>Error: {filtError.message}</p>
             for (let i = 0; i < Object.keys(filtData.filterProdByAttr).length; i++) {
                 for (let j = 0; j < Object.keys(filtData.filterProdByAttr[i].AmazonProducts).length; j++) {
-                    filtList.add(filtData.filterProdByAttr[i].AmazonProducts[j].amazonProduct.name);
+                    filtList.add(filtData.filterProdByAttr[i].AmazonProducts[j].amazonProduct);
                 }
             }
         }
     }
     
+    function showTable() {
+        if (numberOfObjects != 0) return <Table contents={contents} shelfDimensions={shelfDimensions}/>
+    }
     
-
     return (
         <div id="main">
             <Generator onChange={callback} filterList={attributeList}/>
-            <Table contents={contents} shelfDimensions={shelfDimensions}/>
+            {showTable()}
         </div>
     );
     
