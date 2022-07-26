@@ -71,6 +71,10 @@ function Evaluator() {
     }
 
     function fetchData() {
+        //if no boxes are checked show objects with all attributes
+        if (checkedBoxes.length == 0) {
+            setCheckedBoxes(attributeList.map((x) => x.id));
+        }
         if (filtData !== undefined) {
             if (filtLoading) return <p>Loading</p>;
             if (filtError) return <p>Error: {filtError.message}</p>
@@ -85,7 +89,7 @@ function Evaluator() {
     function showTable() {
         if (numberOfObjects != 0) return <Table contents={contents} shelfDimensions={shelfDimensions}/>
     }
-
+    
     return (
         <div id="main">
             <Generator onChange={callback} filterList={attributeList}/>
