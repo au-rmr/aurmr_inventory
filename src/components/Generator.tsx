@@ -39,29 +39,30 @@ function Generator(props:GeneratorProps) {
             <div id = "num-bins">
                 <div id="text">Number of objects:</div>
                 <textarea
-                    id="text-area"
+                    id="object-text-area"
                     rows={5}
                     cols={30}
                     onChange={(event) => setTextArea(event.target.value)}
                     value={textArea}
                 /> <br/>
             </div>
-            <button id="submit-button" onClick={parseNumBins}>Submit</button>
-            
-            {props.filterList.map((att, index) => {
-                return (
-                    <div id="filter" key={att.id}>
-                        <input
-                        type="checkbox"
-                        id={`id-${index}`}
-                        name={att.value}
-                        value={att.value}
-                        checked={checkedState[index]}
-                        onChange={() => handleOnChange(index)}
-                        /> {att.value}
-                    </div>
-                )
-            })}
+            <button id="button" onClick={parseNumBins}>Submit</button>
+            <div id="checkboxes">
+                {props.filterList.map((att, index) => {
+                    return (
+                        <div id="filter" key={att.id}>
+                            <input
+                            type="checkbox"
+                            id={`id-${index}`}
+                            name={att.value}
+                            value={att.value}
+                            checked={checkedState[index]}
+                            onChange={() => handleOnChange(index)}
+                            /> {att.value}
+                        </div>
+                    )
+                })}
+            </div>
         </>
     );
 
