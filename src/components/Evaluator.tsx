@@ -49,7 +49,7 @@ function Evaluator() {
     const [checkedBoxes, setCheckedBoxes] = useState<number[]>([]);
     const [contents, setContents] = useState<string[][]>([[]]);
     const [numberOfObjects, setNumberOfObjects] = useState<number>(0);
-    const shelfDimensions: number[] = [12, 4];
+    const [shelfDimensions, setShelfDimensions] = useState<number[]>([12, 4]);
 
     let attributeList: any[] = [];
     let filtList = new Set<string>();
@@ -67,7 +67,18 @@ function Evaluator() {
         setContents(randomlyAssignObjects(shelfDimensions[0]*shelfDimensions[1], numberOfObjects, (Array.from(filtList)).map((x: any) => x.name)));
     }, [filtData, numberOfObjects]);
 
-    const callback = (numObjects: number, checked: number[]) => {
+    useEffect(() => {
+        fetchData();
+        setContents(randomlyAssignObjects(shelfDimensions[0]*shelfDimensions[1], numberOfObjects, (Array.from(filtList)).map((x: any) => x.name)));
+    }, [shelfDimensions]);
+
+    const callback = (numObjects: number, checked: number[], table: string) => {
+        if (table === "Table 1") {
+            setShelfDimensions([12, 4]);
+        }
+        else if (table === "Table 2") {
+            setShelfDimensions([8, 3]);
+        }
         setCheckedBoxes(checked);
         setNumberOfObjects(numObjects);
         fetchData();
