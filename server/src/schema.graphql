@@ -9,6 +9,10 @@ type Query {
 
   getAllEvals: [Evaluation]
 
+  getOneEval(evalName: String!): [Evaluation]
+
+  getAmazonProductFromBinEval(evalName: String!, binName: String!): [AmazonProduct]
+
   getAllBins: [Bin]
 }
 
