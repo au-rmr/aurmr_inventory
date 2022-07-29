@@ -8,6 +8,7 @@ import {
 import Evaluator from './Evaluator';
 import ManualEval from './ManualEval';
 import Home from './Home';
+import EditBin from './EditBin';
 import styled from '@emotion/styled';
 
 const NavUnlisted = styled.ul`
@@ -50,6 +51,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/evaluator" element={<div id="main"><Evaluator /></div>} />
         <Route path="/manualevaluation" element={<ManualEval />} />
+        <Route path="/manualevaluation/editBin/:binId" element={<EditBin />} />
       </Routes>
     </Router>
   );

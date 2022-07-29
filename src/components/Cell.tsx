@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
 import '../styles/Cell.css';
+import {Link} from 'react-router-dom';
+
+import AddIcon from '@mui/icons-material/Add';
 
 interface CellProps {
-
+    amazonProduct: String
 }
 
 interface CellState {
@@ -13,12 +16,8 @@ interface CellState {
 class Cell extends Component<CellProps, CellState> {
     render() {
         return (
-            <div id="overall">
-                <p>Add an Amazon Product</p>
-                <form>
-                    <input type="text" placeholder='Enter the ASIN id for a product you wish to add.'/>
-                    <button>Update</button>
-                </form>
+            <div id="overall2">
+                <p>{this.props.amazonProduct}</p>
             </div>
         )
     }

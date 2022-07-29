@@ -10,6 +10,13 @@ module.exports = {
                             attribute: true
                         }
                     },
+                    bins: {
+                        include: {
+                            bin: true, 
+                            evaluation: true
+                        }
+                    }, 
+
                 }
             })
         },
@@ -77,7 +84,7 @@ module.exports = {
                                 include: {
                                     ProductFromBin: {
                                         include: {
-                                            amazonProduct: true, 
+                                            amazonProduct: true,
                                             bin: true
                                         }
                                     }
@@ -88,6 +95,69 @@ module.exports = {
                 }
             })
             return evals
+        },
+
+        getOneEval: async (_, args, context) => {
+            const evals = context.prisma.evaluation.findMany({
+                where: {
+                    name: args.evalName,
+                },
+                include: {
+                    Setup: {
+                        include: {
+                            amazonProduct: true,
+                            bin: true,
+                            picks: {
+                                include: {
+                                    ProductFromBin: {
+                                        include: {
+                                            amazonProduct: true,
+                                            bin: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+            return evals
+        },
+
+        getAmazonProductFromBinEval: (_, args, context) => {
+            const prods = context.prisma.amazonProduct.findMany({
+                where: {
+                    bins: {
+                        every: {
+                            bin: {
+                                equals: {
+                                    BinName: args.binName
+                                }
+                            }, 
+                            evaluation: {
+                                equals: {
+                                    name: args.evalName
+                                }                                
+                            } 
+                        }                                               
+                    }
+                }, 
+                include: {
+                    attributes: {
+                        include: {
+                            attribute: true
+                        }
+                    },
+                    bins: {
+                        include: {
+                            bin: true, 
+                            evaluation: true
+                        }
+                    }, 
+
+                }
+            })
+            return prods;
         },
 
         getAllBins: (_, args, context) => {
@@ -276,7 +346,7 @@ module.exports = {
                             id: args.ProductBinId
                         }
                     }
-                }, 
+                },
                 include: {
                     ProductFromBin: {
                         include: {
