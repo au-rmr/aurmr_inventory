@@ -48,6 +48,9 @@ model Pick {
 model Bin {
   id             Int            @id @default(autoincrement())
   BinId          String         @unique
+  BinName String
+  TableId String
+  TableName String?
   AmazonProducts ProductBin[]
 }
 

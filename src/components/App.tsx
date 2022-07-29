@@ -6,7 +6,9 @@ import {
   Route,
 } from "react-router-dom";
 import Evaluator from './Evaluator';
+import ManualEval from './ManualEval';
 import Home from './Home';
+import EditBin from './EditBin';
 import styled from '@emotion/styled';
 
 const NavUnlisted = styled.ul`
@@ -41,10 +43,15 @@ function App() {
           <NavLink to="/evaluator">
             <li>Evaluator</li>
           </NavLink>
+          <NavLink to="/manualevaluation">
+            <li>Manual Evaluation</li>
+          </NavLink>
       </NavUnlisted>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/evaluator" element={<div id="main"><Evaluator /></div>} />
+        <Route path="/manualevaluation" element={<ManualEval />} />
+        <Route path="/manualevaluation/editBin/:binId" element={<EditBin />} />
       </Routes>
     </Router>
   );

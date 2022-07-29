@@ -1,0 +1,33 @@
+#overall {
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+#itemInput {
+    padding-right: 25px;
+}
+
+#itemBinButton { 
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+#submitEvalButton {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+#rightForm, #leftForm {
+    margin: 25px;
+    border: 2px;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 10px;
+    border-color: black;
+    display: inline-block;
+}
+
+#topStuff {
+    border-bottom: 3px dashed black;
+}
