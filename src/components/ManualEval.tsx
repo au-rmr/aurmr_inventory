@@ -9,6 +9,7 @@ import { GET_ALL_BINS } from '../GraphQLQueriesMuts/Query';
 import { GET_ALL_PROD } from '../GraphQLQueriesMuts/Query';
 import { ADD_PROD_TO_BIN_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { GET_ONE_EVAL } from '../GraphQLQueriesMuts/Query';
+import { GET_PROD_IN_BIN_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
 import { JsxEmit } from 'typescript';
 
 import FormLabel from '@mui/material/FormLabel';
@@ -55,7 +56,7 @@ function ManualEval(props: any) {
     }
 
     const table2 = {
-        rows: 8, 
+        rows: 8,
         cols: 3
     }
 
@@ -83,8 +84,9 @@ function ManualEval(props: any) {
     const { data: prodData, loading: prodLoading, error: prodError } = useQuery(GET_ALL_PROD);
     const [add_prod_to_bin, { data: addProdToBinData, loading: addProdToBinLoading, error: addProdToBinError }] = useMutation(ADD_PROD_TO_BIN_FOR_AN_EVAL);
     const { data: evalData, loading: evalLoading, error: evalError, refetch: evalRefetch } = useQuery(GET_ONE_EVAL);
+    const { data: eachBinData, loading: eachBinDataLoading, error: eachBinDataErrorLoading, refetch: prodInBinEvalRefetch } = useQuery(GET_PROD_IN_BIN_FOR_EVAL);
 
-    if ((BinLoading) || (prodLoading) || (evalLoading)) return <p>Loading...</p>;
+    if ((BinLoading) || (prodLoading) || (evalLoading) || (eachBinDataLoading)) return <p>Loading...</p>;
     if (addProdToBinLoading) return <p>Submitting...</p>
     if (BinError) return <p>Error: {BinError.message}</p>
     if (prodError) return <p>Error: {prodError.message}</p>
@@ -184,7 +186,8 @@ function ManualEval(props: any) {
             setisAsinError(false);
             setisBinError(false);
             refASIN.current!.focus();
-            console.log(await evalRefetch({evalName: submitableEvalName}));
+            console.log(await evalRefetch({ evalName: submitableEvalName }));
+            generateTable();
         }
     }
 
@@ -198,24 +201,40 @@ function ManualEval(props: any) {
             setisAsinError(false);
             setisBinError(false);
             refASIN.current!.focus();
+            generateTable();
         }
     }
 
-    function generateTable() {
-        let listOfRows: JSX.Element[] = [];
-        let count: number = 0;
-        for (let i = table1.rows; i >= 1; i--) {
-            let listOfItems: JSX.Element[] = [];
-            for (let j = 1; j <= table1.cols; j++) {
-                let tableData: JSX.Element = <TableCell><p>{j + String.fromCharCode(64 + i)}</p><Cell amazonProduct={"Juice"}></Cell></TableCell>
-                listOfItems[j - 1] = tableData;
+    async function generateTable() {
+        if (submitableEvalName != "") {
+            let listOfRows: JSX.Element[] = [];
+            let count: number = 0;
+            for (let i = table1.rows; i >= 1; i--) {
+                let listOfItems: JSX.Element[] = [];
+                for (let j = 1; j <= table1.cols; j++) {
+                    let binName1: string = j + String.fromCharCode(64 + i)
+                    let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1 });
+                    console.log(prods);
+                    let tempAmzList = [];
+                    for (let i = 0; i < Object.keys(prods.data.getAmazonProductFromBinEval).length; i++) {
+                        let prodAmz = {
+                            "name": prods.data.getAmazonProductFromBinEval[i].amazonProduct.name,
+                            "asin": prods.data.getAmazonProductFromBinEval[i].amazonProduct.asin,
+                            "id": prods.data.getAmazonProductFromBinEval[i].id,
+                        }
+                        tempAmzList.push(prodAmz);
+                    }
+                    console.log(tempAmzList); 
+                    let tableData: JSX.Element = <TableCell><p>{binName1}</p><Cell amazonProduct={tempAmzList}></Cell></TableCell>
+                    listOfItems[j - 1] = tableData;
+                }
+                let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
+                listOfRows[count] = tableRow;
+                count++;
             }
-            let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
-            listOfRows[count] = tableRow;
-            count++;
+            let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
+            setTable1Actual(tableJSX);
         }
-        let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
-        setTable1Actual(tableJSX);
     }
 
     function evalNameOnClick() {
@@ -224,7 +243,7 @@ function ManualEval(props: any) {
             setEvalNameError(false);
         } else {
             setEvalNameError(true);
-        }       
+        }
     }
 
     return (
