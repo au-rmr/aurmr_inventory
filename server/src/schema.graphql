@@ -11,7 +11,7 @@ type Query {
 
   getOneEval(evalName: String!): [Evaluation]
 
-  getAmazonProductFromBinEval(evalName: String!, binName: String!): [AmazonProduct]
+  getAmazonProductFromBinEval(evalName: String!, binName: String!): [ProductBin]
 
   getAllBins: [Bin]
 }

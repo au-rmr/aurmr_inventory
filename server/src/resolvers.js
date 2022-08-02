@@ -12,10 +12,10 @@ module.exports = {
                     },
                     bins: {
                         include: {
-                            bin: true, 
+                            bin: true,
                             evaluation: true
                         }
-                    }, 
+                    },
 
                 }
             })
@@ -124,37 +124,30 @@ module.exports = {
             return evals
         },
 
-        getAmazonProductFromBinEval: (_, args, context) => {
-            const prods = context.prisma.amazonProduct.findMany({
+        getAmazonProductFromBinEval: async (_, args, context) => {
+            const prods = context.prisma.productBin.findMany({
                 where: {
-                    bins: {
-                        every: {
+                    AND: [
+                        {
                             bin: {
-                                equals: {
-                                    BinName: args.binName
+                                BinName: {
+                                    equals: args.binName
                                 }
-                            }, 
+                            }
+                        }, 
+                        {
                             evaluation: {
-                                equals: {
-                                    name: args.evalName
-                                }                                
-                            } 
-                        }                                               
-                    }
-                }, 
+                                name: {
+                                    equals: args.evalName
+                                }
+                            }
+                        }
+                    ]
+                },
                 include: {
-                    attributes: {
-                        include: {
-                            attribute: true
-                        }
-                    },
-                    bins: {
-                        include: {
-                            bin: true, 
-                            evaluation: true
-                        }
-                    }, 
-
+                    bin: true,
+                    evaluation: true,
+                    amazonProduct: true
                 }
             })
             return prods;
