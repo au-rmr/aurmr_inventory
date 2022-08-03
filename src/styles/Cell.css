@@ -6,3 +6,10 @@
     margin: 2px;
     padding: 2px;
 }
+
+.itemProd {
+    border-color: purple;
+    border-style: inset;
+    border-radius: 5px;
+    margin: 2px;
+}

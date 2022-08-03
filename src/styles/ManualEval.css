@@ -31,3 +31,10 @@
 #topStuff {
     border-bottom: 3px dashed black;
 }
+
+.submitMessagebox {
+    padding: 5px;
+    background-color: green;
+    border-color: green;
+    border-radius: 5px;
+}
