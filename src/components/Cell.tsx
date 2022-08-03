@@ -36,9 +36,9 @@ function Cell({amazonProduct, generateTable}: CellProps) {
         <div id="overall2">
             <ul>
                 {amazonProduct.map((item: any, i: number) => {
-                    return <li key={i}>
+                    return <li className="itemProd" key={i}>
                         <Button onClick={() => handleDelete(item["id"])}><SvgIcon component={DeleteIcon} /></Button>{item["name"]}
-                        <p>{item["size_length"]} x {item["size_width"]} x {item["size_height"]} {item["size_units"]}</p>
+                        <p>Item Volume: {item["size_length"]} x {item["size_width"]} x {item["size_height"]} {item["size_units"]} = {parseFloat(item["object_volume"]).toFixed(2)} {item["size_units"]}^3</p>
                     </li>
                 })}
             </ul>

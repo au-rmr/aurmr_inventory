@@ -81,6 +81,7 @@ function ManualEval(props: any) {
     const [tableDisabled, setTableDisabled] = useState<boolean>(false);
 
     let binList: string[] = [];
+    let binInfoList: any[] = [];
     let prodList: string[] = [];
 
     const { data: BinData, loading: BinLoading, error: BinError } = useQuery(GET_ALL_BINS);
@@ -99,6 +100,17 @@ function ManualEval(props: any) {
 
     for (let i = 0; i < Object.keys(BinData.getAllBins).length; i++) {
         binList.push(BinData.getAllBins[i].BinId);
+        binInfoList.push(
+            {
+                "binId": BinData.getAllBins[i].BinId,
+                "tableName": BinData.getAllBins[i].TableName,
+                "binName": BinData.getAllBins[i].BinName,
+                "depth": BinData.getAllBins[i].depth,
+                "width": BinData.getAllBins[i].width,
+                "height": BinData.getAllBins[i].height,
+                "units": BinData.getAllBins[i].dimensions_units
+            }
+        );
     }
 
     for (let j = 0; j < Object.keys(prodData.getAllProducts).length; j++) {
@@ -128,7 +140,13 @@ function ManualEval(props: any) {
         console.log(e.target.value);
         setSubmitableBin(e.target.value);
         let binErr: boolean = true;
-        if (binList.includes(e.target.value)) {
+        let tableRelatedBin: string[] = [];
+        for (let i = 0; i < binInfoList.length; i++) {
+            if (binInfoList[i]["tableName"] == tableName) {
+                tableRelatedBin.push(binInfoList[i]["binId"]);
+            }
+        }
+        if (tableRelatedBin.includes(e.target.value)) {
             console.log("true");
             setisBinError(false);
             binErr = false;
@@ -147,7 +165,7 @@ function ManualEval(props: any) {
         if (!isasinError && !isbinError && sProd != "" && sBin != "" && submitableEvalName != "") {
             //submit
             add_prod_to_bin({ variables: { asin: sProd, binId: sBin, evalName: submitableEvalName } })
-            setSubmitMessage("submit: " + sProd + " inside " + sBin + " for " + submitableEvalName)
+            setSubmitMessage("Submit Successful: " + sProd + " inside " + sBin + " for " + submitableEvalName)
             console.log("submit: " + sProd + " inside " + sBin + " for " + submitableEvalName);
             setSubmitableProd("");
             setSubmitableBin("");
@@ -162,7 +180,7 @@ function ManualEval(props: any) {
     function submitOnClick() {
         if (!isASINError && !isBinError && submitableProd != "" && submitableBin != "" && submitableEvalName != "") {
             add_prod_to_bin({ variables: { asin: submitableProd, binId: submitableBin, evalName: submitableEvalName } })
-            setSubmitMessage("submit: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName)
+            setSubmitMessage("Submit Successful: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName)
             console.log("submit: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName);
             setSubmitableProd("");
             setSubmitableBin("");
@@ -173,71 +191,100 @@ function ManualEval(props: any) {
         }
     }
 
+    async function generateTableHelper(table: any) {
+        let listOfRows: JSX.Element[] = [];
+        let count: number = 0;
+        for (let i = table.rows; i >= 1; i--) {
+            let listOfItems: JSX.Element[] = [];
+            for (let j = 1; j <= table.cols; j++) {
+                let binName1: string = j + String.fromCharCode(64 + i);
+                let binsize: string = "";
+                let binsizeunits: string = "";
+                for (let k = 0; k < binInfoList.length; k++) {
+                    if (binInfoList[k]["binName"] == binName1 && binInfoList[k]["tableName"] == tableName) {
+                        binsize = binInfoList[k]["width"] + " x " + binInfoList[k]["height"] + " x " + binInfoList[k]["depth"];
+                        binsizeunits = binInfoList[k]["units"];
+                    }
+                }
+                let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1, tableName: tableName });
+                console.log(prods);
+                let tempAmzList = [];
+                let allObjVol: number = 0;
+                for (let i = 0; i < Object.keys(prods.data.getAmazonProductFromBinEval).length; i++) {
+                    let objVol = parseFloat(prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_length) * parseFloat(prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width) * parseFloat(prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height);
+
+                    let prodAmz = {
+                        "name": prods.data.getAmazonProductFromBinEval[i].amazonProduct.name,
+                        "asin": prods.data.getAmazonProductFromBinEval[i].amazonProduct.asin,
+                        "id": prods.data.getAmazonProductFromBinEval[i].id,
+                        "size_length": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_length,
+                        "size_width": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width,
+                        "size_height": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height,
+                        "size_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_units,
+                        "object_volume": objVol,
+                    }
+
+                    allObjVol += objVol
+                    tempAmzList.push(prodAmz);
+                }
+
+                let binsizevals: string[] = binsize.split(" x ");
+                let binVol: number = parseFloat(binsizevals[0]) * parseFloat(binsizevals[1]) * parseFloat(binsizevals[2]);
+                let binGCU: number = allObjVol / binVol;
+
+                let tableData: JSX.Element = <TableCell><p>{binName1}</p><p>Total Volume: {binsize} {binsizeunits} = {binVol} {binsizeunits}^3</p><p>Bin GCU: {parseFloat(binGCU.toString()).toFixed(2)}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
+                listOfItems[j - 1] = tableData;
+            }
+            let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
+            listOfRows[count] = tableRow;
+            count++;
+        }
+        let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
+        setTable1Actual(tableJSX);
+    }
+
     async function generateTable() {
         if (submitableEvalName != "" && tableName == "1") {
-            let listOfRows: JSX.Element[] = [];
-            let count: number = 0;
-            for (let i = table1.rows; i >= 1; i--) {
-                let listOfItems: JSX.Element[] = [];
-                for (let j = 1; j <= table1.cols; j++) {
-                    let binName1: string = j + String.fromCharCode(64 + i)
-                    let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1, tableName: tableName });
-                    console.log(prods);
-                    let tempAmzList = [];
-                    for (let i = 0; i < Object.keys(prods.data.getAmazonProductFromBinEval).length; i++) {
-                        let prodAmz = {
-                            "name": prods.data.getAmazonProductFromBinEval[i].amazonProduct.name,
-                            "asin": prods.data.getAmazonProductFromBinEval[i].amazonProduct.asin,
-                            "id": prods.data.getAmazonProductFromBinEval[i].id,
-                            "size_length": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_length,
-                            "size_width": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width,
-                            "size_height": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height,
-                            "size_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_units,
-                        }
-                        tempAmzList.push(prodAmz);
-                    }
-                    console.log(tempAmzList);
-                    let tableData: JSX.Element = <TableCell><p>{binName1}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
-                    listOfItems[j - 1] = tableData;
-                }
-                let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
-                listOfRows[count] = tableRow;
-                count++;
-            }
-            let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
-            setTable1Actual(tableJSX);
+            generateTableHelper(table1);
         } else if (submitableEvalName != "" && tableName == "2") {
-            let listOfRows: JSX.Element[] = [];
-            let count: number = 0;
-            for (let i = table2.rows; i >= 1; i--) {
-                let listOfItems: JSX.Element[] = [];
-                for (let j = 1; j <= table2.cols; j++) {
-                    let binName1: string = j + String.fromCharCode(64 + i)
-                    let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1, tableName: tableName });
-                    console.log(prods);
-                    let tempAmzList = [];
-                    for (let i = 0; i < Object.keys(prods.data.getAmazonProductFromBinEval).length; i++) {
-                        let prodAmz = {
-                            "name": prods.data.getAmazonProductFromBinEval[i].amazonProduct.name,
-                            "asin": prods.data.getAmazonProductFromBinEval[i].amazonProduct.asin,
-                            "id": prods.data.getAmazonProductFromBinEval[i].id,
-                            "size_length": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_length,
-                            "size_width": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width,
-                            "size_height": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height,
-                            "size_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_units,
-                        }
-                        tempAmzList.push(prodAmz);
-                    }
-                    console.log(tempAmzList);
-                    let tableData: JSX.Element = <TableCell><p>{binName1}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
-                    listOfItems[j - 1] = tableData;
-                }
-                let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
-                listOfRows[count] = tableRow;
-                count++;
-            }
-            let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
-            setTable1Actual(tableJSX);
+            generateTableHelper(table2);
+            // let listOfRows: JSX.Element[] = [];
+            // let count: number = 0;
+            // for (let i = table2.rows; i >= 1; i--) {
+            //     let listOfItems: JSX.Element[] = [];
+            //     for (let j = 1; j <= table2.cols; j++) {
+            //         let binName1: string = j + String.fromCharCode(64 + i);
+            //         let binsize: string = "";
+            //         for (let k = 0; k < binInfoList.length; k++) {
+            //             if (binInfoList[k]["binName"] == binName1 && binInfoList[k]["tableName"] == tableName) {
+            //                 binsize = binInfoList[k]["width"] + " x " + binInfoList[k]["height"] + " x " + binInfoList[k]["depth"];
+            //             }
+            //         }
+            //         let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1, tableName: tableName });
+            //         console.log(prods);
+            //         let tempAmzList = [];
+            //         for (let i = 0; i < Object.keys(prods.data.getAmazonProductFromBinEval).length; i++) {
+            //             let prodAmz = {
+            //                 "name": prods.data.getAmazonProductFromBinEval[i].amazonProduct.name,
+            //                 "asin": prods.data.getAmazonProductFromBinEval[i].amazonProduct.asin,
+            //                 "id": prods.data.getAmazonProductFromBinEval[i].id,
+            //                 "size_length": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_length,
+            //                 "size_width": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width,
+            //                 "size_height": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height,
+            //                 "size_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_units,
+            //             }
+            //             tempAmzList.push(prodAmz);
+            //         }
+            //         console.log(tempAmzList);
+            //         let tableData: JSX.Element = <TableCell><p>{binName1}</p><p>Total Volume: {binsize}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
+            //         listOfItems[j - 1] = tableData;
+            //     }
+            //     let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
+            //     listOfRows[count] = tableRow;
+            //     count++;
+            // }
+            // let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
+            // setTable1Actual(tableJSX);
         }
     }
 
@@ -280,13 +327,13 @@ function ManualEval(props: any) {
                                 control={
                                     <Radio onChange={(e) => setTableName("1")} value="1" name="1" />
                                 }
-                                label="Table 1"
+                                label="Table 1 (6-inch)"
                             />
                             <FormControlLabel
                                 control={
                                     <Radio onChange={(e) => setTableName("2")} value="2" name="2" />
                                 }
-                                label="Table 2"
+                                label="Table 2 (14-inch)"
                             />
                             <FormControlLabel
                                 control={
@@ -305,7 +352,7 @@ function ManualEval(props: any) {
                     </FormControl>
                 </div>
 
-                {submitMessage != "" ? <p>{submitMessage}</p> : <p></p>}
+                {submitMessage != "" ? <p className="submitMessagebox">{submitMessage}</p> : <p></p>}
 
                 <div style={{ "display": "block", "margin": "15px" }}>
                     <FormControl>

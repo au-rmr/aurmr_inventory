@@ -7,6 +7,10 @@ export const GET_ALL_BINS = gql `
             BinName
             TableId
             TableName
+            depth
+            width
+            height
+            dimensions_units
             AmazonProducts {
                 amazonProduct {
                     name
@@ -56,6 +60,12 @@ query getSingleEval($evalName:String!) {
             }
             bin {
                 BinId
+                BinName
+                TableName
+                depth
+                width
+                height
+                dimensions_units
             }
             picks {
                 ProductFromBin {
@@ -79,6 +89,10 @@ query getProdFromBinEval($binName: String!, $evalName: String!, $tableName:Strin
       bin {
         BinName
         TableName
+        depth
+        width
+        height
+        dimensions_units
       } 
       evaluation {
         name
