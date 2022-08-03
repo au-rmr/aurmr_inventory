@@ -76,6 +76,9 @@ function ManualEval(props: any) {
     const [autoOrManual, setAutoOrManual] = useState<string>("Automatic");
     const [submitableEvalName, setSubmitableEvalName] = useState<string>("");
     const [table1Actual, setTable1Actual] = useState<JSX.Element>(<table></table>)
+    const [tableName, setTableName] = useState<string>("");
+    const [tableError, setTableError] = useState<boolean>(false);
+    const [tableDisabled, setTableDisabled] = useState<boolean>(false);
 
     let binList: string[] = [];
     let prodList: string[] = [];
@@ -100,41 +103,6 @@ function ManualEval(props: any) {
 
     for (let j = 0; j < Object.keys(prodData.getAllProducts).length; j++) {
         prodList.push(prodData.getAllProducts[j].asin)
-    }
-
-
-    const getTableRows = async () => {
-        console.log(BinLoading)
-        if (!BinLoading) {
-            setLoading(true);
-        } else {
-            setLoading(false);
-        }
-        let tableRows: JSX.Element[] = [];
-        let tableCols: JSX.Element[] = [];
-
-        let k = 0;
-        for (let i = 0; i < binList.length; i++) {
-            tableCols[i] = <Card sx={{ minWidth: 275 }}>
-                <CardContent>
-                    <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                        {binList[i]}
-                    </Typography>
-                </CardContent>
-                <CardActions>
-                    <Button size="small"><Link to={`/manualevaluation/editBin/${binList[i]}`}><AddIcon /> Add Item</Link></Button>
-                </CardActions>
-            </Card>
-        }
-        setRows(tableRows);
-        setCols(tableCols);
-        setLoading(false);
-    }
-
-    const handleCheckBoxChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        console.log("Entered CheckBoxChange")
-        setTables(e.target.name);
-        console.log(tables);
     }
 
     const checkValidASIN = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,14 +174,14 @@ function ManualEval(props: any) {
     }
 
     async function generateTable() {
-        if (submitableEvalName != "") {
+        if (submitableEvalName != "" && tableName == "1") {
             let listOfRows: JSX.Element[] = [];
             let count: number = 0;
             for (let i = table1.rows; i >= 1; i--) {
                 let listOfItems: JSX.Element[] = [];
                 for (let j = 1; j <= table1.cols; j++) {
                     let binName1: string = j + String.fromCharCode(64 + i)
-                    let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1 });
+                    let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1, tableName: tableName });
                     console.log(prods);
                     let tempAmzList = [];
                     for (let i = 0; i < Object.keys(prods.data.getAmazonProductFromBinEval).length; i++) {
@@ -221,11 +189,47 @@ function ManualEval(props: any) {
                             "name": prods.data.getAmazonProductFromBinEval[i].amazonProduct.name,
                             "asin": prods.data.getAmazonProductFromBinEval[i].amazonProduct.asin,
                             "id": prods.data.getAmazonProductFromBinEval[i].id,
+                            "size_length": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_length,
+                            "size_width": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width,
+                            "size_height": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height,
+                            "size_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_units,
                         }
                         tempAmzList.push(prodAmz);
                     }
-                    console.log(tempAmzList); 
-                    let tableData: JSX.Element = <TableCell><p>{binName1}</p><Cell amazonProduct={tempAmzList}></Cell></TableCell>
+                    console.log(tempAmzList);
+                    let tableData: JSX.Element = <TableCell><p>{binName1}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
+                    listOfItems[j - 1] = tableData;
+                }
+                let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
+                listOfRows[count] = tableRow;
+                count++;
+            }
+            let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
+            setTable1Actual(tableJSX);
+        } else if (submitableEvalName != "" && tableName == "2") {
+            let listOfRows: JSX.Element[] = [];
+            let count: number = 0;
+            for (let i = table2.rows; i >= 1; i--) {
+                let listOfItems: JSX.Element[] = [];
+                for (let j = 1; j <= table2.cols; j++) {
+                    let binName1: string = j + String.fromCharCode(64 + i)
+                    let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1, tableName: tableName });
+                    console.log(prods);
+                    let tempAmzList = [];
+                    for (let i = 0; i < Object.keys(prods.data.getAmazonProductFromBinEval).length; i++) {
+                        let prodAmz = {
+                            "name": prods.data.getAmazonProductFromBinEval[i].amazonProduct.name,
+                            "asin": prods.data.getAmazonProductFromBinEval[i].amazonProduct.asin,
+                            "id": prods.data.getAmazonProductFromBinEval[i].id,
+                            "size_length": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_length,
+                            "size_width": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width,
+                            "size_height": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height,
+                            "size_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_units,
+                        }
+                        tempAmzList.push(prodAmz);
+                    }
+                    console.log(tempAmzList);
+                    let tableData: JSX.Element = <TableCell><p>{binName1}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
                     listOfItems[j - 1] = tableData;
                 }
                 let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
@@ -246,92 +250,112 @@ function ManualEval(props: any) {
         }
     }
 
+    function tableNameOnClick() {
+        if (tableName != "") {
+            setTableDisabled(true);
+            setTableError(false);
+        } else {
+            setTableError(true);
+        }
+
+    }
+
     return (
         <div id="overall">
             <h1>Manual Evaluation</h1>
             <div id="topStuff">
-                <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
-                <FormControl id="evalName" error={evalNameError} variant="standard">
-                    <InputLabel htmlFor="evalNameForm">Evaluation Name</InputLabel>
-                    <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
-                </FormControl>
-                <Button variant="outlined" color="success" id="itemBinButton" onClick={evalNameOnClick}>Submit Evaluation Name</Button>
+                <div style={{ "display": "block", "margin": "15px" }}>
+                    <FormControl id="evalName" error={evalNameError} variant="standard">
+                        <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
+                        <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
+                    </FormControl>
+                    <Button variant="outlined" color="success" id="itemBinButton" onClick={evalNameOnClick}>Submit Evaluation Name</Button>
+                </div>
+
+                <div style={{ "display": "block", "margin": "15px" }}>
+                    <FormControl error={tableError} disabled={tableDisabled}>
+                        <FormLabel component="legend">Pick a table</FormLabel>
+                        <RadioGroup value={tableName} row>
+                            <FormControlLabel
+                                control={
+                                    <Radio onChange={(e) => setTableName("1")} value="1" name="1" />
+                                }
+                                label="Table 1"
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Radio onChange={(e) => setTableName("2")} value="2" name="2" />
+                                }
+                                label="Table 2"
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox disabled name="3" />
+                                }
+                                label="Table 3"
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox disabled name="4" />
+                                }
+                                label="Table 4"
+                            />
+                            <Button variant="outlined" color="success" id="itemBinButton" onClick={tableNameOnClick}>Submit Table Choice</Button>
+                        </RadioGroup>
+                    </FormControl>
+                </div>
 
                 {submitMessage != "" ? <p>{submitMessage}</p> : <p></p>}
 
-                <FormControl>
-                    <FormLabel id="demo-radio-buttons-group-label">Method of Input</FormLabel>
-                    <RadioGroup
-                        row
-                        aria-labelledby="demo-radio-buttons-group-label"
-                        defaultValue="Automatic"
-                        value={autoOrManual}
-                        name="radio-buttons-group"
-                        onChange={(e) => setAutoOrManual(e.target.value)}
-                    >
-                        <FormControlLabel value="Automatic" control={<Radio />} label="Automatic" />
-                        <FormControlLabel value="Manual" control={<Radio />} label="Manual" />
-                    </RadioGroup>
-                </FormControl>
+                <div style={{ "display": "block", "margin": "15px" }}>
+                    <FormControl>
+                        <FormLabel id="demo-radio-buttons-group-label">Method of Input</FormLabel>
+                        <RadioGroup
+                            row
+                            aria-labelledby="demo-radio-buttons-group-label"
+                            defaultValue="Automatic"
+                            value={autoOrManual}
+                            name="radio-buttons-group"
+                            onChange={(e) => setAutoOrManual(e.target.value)}
+                        >
+                            <FormControlLabel value="Automatic" control={<Radio />} label="Automatic" />
+                            <FormControlLabel value="Manual" control={<Radio />} label="Manual" />
+                        </RadioGroup>
+                    </FormControl>
 
-                {autoOrManual == "Automatic" ?
-                    <div id="leftForm">
-                        <FormLabel component="legend">Enter Automatically:</FormLabel>
-                        <FormControl id="itemInput" error={isASINError} variant="standard">
-                            <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                            <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
-                        </FormControl>
+                    {autoOrManual == "Automatic" ?
+                        <div id="leftForm">
+                            <FormLabel component="legend">Enter Automatically:</FormLabel>
+                            <FormControl id="itemInput" error={isASINError} variant="standard">
+                                <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
+                                <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                            </FormControl>
 
-                        <FormControl id="binInput" error={isBinError} variant="standard">
-                            <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
-                            <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
-                        </FormControl>
+                            <FormControl id="binInput" error={isBinError} variant="standard">
+                                <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
+                                <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
+                            </FormControl>
 
-                    </div>
-                    :
-                    <div id="rightForm">
-                        <FormLabel component="legend">Enter Manually:</FormLabel>
-                        <FormControl id="itemInput" error={isASINError} variant="standard">
-                            <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                            <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
-                        </FormControl>
+                        </div>
+                        :
+                        <div id="rightForm">
+                            <FormLabel component="legend">Enter Manually:</FormLabel>
+                            <FormControl id="itemInput" error={isASINError} variant="standard">
+                                <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
+                                <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                            </FormControl>
 
-                        <FormControl id="binInput" error={isBinError} variant="standard">
-                            <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
-                            <Input inputRef={refBin} onChange={checkValidBin} value={submitableBin} error={isBinError} id="binid" placeholder="Bin Id" />
-                        </FormControl>
-                        <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
-                    </div>
-                }
-
+                            <FormControl id="binInput" error={isBinError} variant="standard">
+                                <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
+                                <Input inputRef={refBin} onChange={checkValidBin} value={submitableBin} error={isBinError} id="binid" placeholder="Bin Id" />
+                            </FormControl>
+                            <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
+                        </div>
+                    }
+                </div>
                 <Button variant="contained" id="submitEvalButton" >Submit Evaluation {submitableEvalName}</Button>
             </div>
-            <FormLabel component="legend">Pick two</FormLabel>
             <FormGroup row>
-                <FormControlLabel
-                    control={
-                        <Checkbox onChange={(e) => handleCheckBoxChange} name="1" />
-                    }
-                    label="Table 1"
-                />
-                <FormControlLabel
-                    control={
-                        <Checkbox onChange={(e) => handleCheckBoxChange} name="2" />
-                    }
-                    label="Table 2"
-                />
-                <FormControlLabel
-                    control={
-                        <Checkbox onChange={(e) => handleCheckBoxChange} name="3" />
-                    }
-                    label="Table 3"
-                />
-                <FormControlLabel
-                    control={
-                        <Checkbox onChange={(e) => handleCheckBoxChange} name="4" />
-                    }
-                    label="Table 4"
-                />
                 <LoadingButton
                     loading={loading}
                     loadingPosition="start"

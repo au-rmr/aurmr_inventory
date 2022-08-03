@@ -11,9 +11,11 @@ type Query {
 
   getOneEval(evalName: String!): [Evaluation]
 
-  getAmazonProductFromBinEval(evalName: String!, binName: String!): [ProductBin]
+  getAmazonProductFromBinEval(evalName: String!, binName: String!, tableName: String!): [ProductBin]
 
   getAllBins: [Bin]
+
+  getBinByTable(tableName: String!): [Bin]
 }
 
 type Mutation {
@@ -37,9 +39,11 @@ type Mutation {
 
   addEval(name: String!): Evaluation!
 
-  createBin(BinId: String!, BinName: String!, TableId: String!, TableName: String): Bin!
+  createBin(BinId: String!, BinName: String!, TableId: String!, TableName: String, depth: Float, width: Float, height: Float, units: String): Bin!
 
   addProdToBin(asin: String!, binId: String!, evalName: String!): ProductBin!
+
+  deleteProdFromBin(id: ID!): ProductBin
 }
 
 type AmazonProduct {
@@ -84,6 +88,10 @@ type Bin {
   TableId: String!
   TableName: String
   AmazonProducts: [ProductBin]
+  depth: Float
+  width: Float
+  height: Float
+  dimensions_units: String
 }
 
 type ProductBin {

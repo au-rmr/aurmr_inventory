@@ -52,6 +52,10 @@ model Bin {
   TableId String
   TableName String?
   AmazonProducts ProductBin[]
+  depth Float?
+  width Float?
+  height Float?
+  dimensions_units String?
 }
 
 model ProductBin {
