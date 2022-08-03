@@ -73,34 +73,56 @@ query getSingleEval($evalName:String!) {
 `
 
 export const GET_PROD_IN_BIN_FOR_EVAL = gql `
-query getProdFromBinEval($binName: String!, $evalName: String!) {
-    getAmazonProductFromBinEval(evalName: $evalName, binName: $binName) {
+query getProdFromBinEval($binName: String!, $evalName: String!, $tableName:String!) {
+    getAmazonProductFromBinEval(evalName: $evalName, binName: $binName, tableName:$tableName) {
+           id
+      bin {
+        BinName
+        TableName
+      } 
+      evaluation {
+        name
+      }
+      amazonProduct {
         id
-        bin {
-            BinName
-        } 
-        evaluation {
-            name
-        }
-        amazonProduct {
+        asin
+        name
+        size_length
+        size_width
+        size_height
+        size_units
+        weight
+        weight_units
+        attributes {
+          AttributeId
+          AmazonProductId
+          attribute {
             id
-            asin
-            name
-            size_length
-            size_width
-            size_height
-            size_units
-            weight
-            weight_units
-            attributes {
-                AttributeId
-                AmazonProductId
-                attribute {
-                id
-                value
+            value
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_BINS_BY_TABLE = gql `
+    query getBinsByTable($tableName: String!) {
+        getBinByTable(tableName:$tableName) {
+        BinName
+        TableName
+        AmazonProducts {
+            id
+            amazonProduct {
+                name
+                asin
+                bins {
+                    evaluation {
+                        name
+                    }
                 }
             }
         }
+        }
     }
-}
 `

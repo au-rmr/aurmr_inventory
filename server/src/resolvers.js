@@ -132,9 +132,12 @@ module.exports = {
                             bin: {
                                 BinName: {
                                     equals: args.binName
-                                }
+                                },
+                                TableName: {
+                                    equals: args.tableName
+                                }                                
                             }
-                        }, 
+                        },
                         {
                             evaluation: {
                                 name: {
@@ -173,6 +176,30 @@ module.exports = {
             })
             return bins
         },
+
+        getBinByTable: (_, args, context) => {
+            const bins = context.prisma.bin.findMany({
+                where: {
+                    TableName: args.tableName
+                },
+                include: {
+                    AmazonProducts: {
+                        include: {
+                            amazonProduct: {
+                                include: {
+                                    bins: {
+                                        include: {
+                                            evaluation: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } 
+            })
+            return bins
+        }
 
     },
 
@@ -368,7 +395,11 @@ module.exports = {
                     BinId: args.BinId,
                     BinName: args.BinName,
                     TableId: args.TableId,
-                    TableName: args.TableName
+                    TableName: args.TableName, 
+                    depth: args.depth,
+                    width: args.width, 
+                    height: args.height, 
+                    dimensions_units: args.units
                 }
             })
             return addBin
@@ -404,6 +435,15 @@ module.exports = {
             })
             return prodToBin
         },
+
+        deleteProdFromBin: async (_, args, context, info) => {
+            const prodFromBin = context.prisma.productBin.delete({
+                where: {
+                    id: parseInt(args.id)
+                }
+            })
+            return prodFromBin
+        }
 
 
     },
