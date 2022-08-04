@@ -106,13 +106,12 @@ def readWriteToCsv(readFileName, writeFileName):
                 newRow.append("Size")
                 newRow.append("Weight")
             newRows.append(newRow)
-
-    with open(writeFileName, mode="w", newline='') as csv_write_file:
-        csv_writer = csv.writer(csv_write_file, delimiter=',')
-        for row in newRows:
-            csv_writer.writerow(row)
+            with open(writeFileName, mode="a", newline='') as csv_write_file:
+                csv_writer = csv.writer(csv_write_file, delimiter=',')
+                csv_writer.writerow(newRow);
+                csv_write_file.close()
 
 
 if __name__ == "__main__":
-    readWriteToCsv("UWItemSetASIN_withAmazonURL.csv", "Script2AmazonDetails.csv")
+    readWriteToCsv("UWItemSetASIN_withAmazonURL2.csv", "Script2UWItemSetList.csv")
     print("done")

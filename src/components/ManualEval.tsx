@@ -196,6 +196,7 @@ function ManualEval(props: any) {
         let count: number = 0;
         for (let i = table.rows; i >= 1; i--) {
             let listOfItems: JSX.Element[] = [];
+            let podVol: number = 0;
             for (let j = 1; j <= table.cols; j++) {
                 let binName1: string = j + String.fromCharCode(64 + i);
                 let binsize: string = "";
@@ -231,6 +232,7 @@ function ManualEval(props: any) {
                 let binsizevals: string[] = binsize.split(" x ");
                 let binVol: number = parseFloat(binsizevals[0]) * parseFloat(binsizevals[1]) * parseFloat(binsizevals[2]);
                 let binGCU: number = allObjVol / binVol;
+                podVol += binVol;
 
                 let tableData: JSX.Element = <TableCell><p>{binName1}</p><p>Total Volume: {binsize} {binsizeunits} = {binVol} {binsizeunits}^3</p><p>Bin GCU: {parseFloat(binGCU.toString()).toFixed(2)}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
                 listOfItems[j - 1] = tableData;
@@ -413,6 +415,7 @@ function ManualEval(props: any) {
                     Generate
                 </LoadingButton>
             </FormGroup>
+            <h3>Pod GCU: </h3>
             {table1Actual}
         </div>
 
