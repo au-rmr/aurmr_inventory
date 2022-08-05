@@ -10,7 +10,8 @@ import { GET_ALL_PROD } from '../GraphQLQueriesMuts/Query';
 import { ADD_PROD_TO_BIN_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { GET_ONE_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_PROD_IN_BIN_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
-import { JsxEmit } from 'typescript';
+import { GET_ONE_PROD } from '../GraphQLQueriesMuts/Query';
+import { convertCompilerOptionsFromJson, JsxEmit } from 'typescript';
 
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
@@ -79,6 +80,11 @@ function ManualEval(props: any) {
     const [tableName, setTableName] = useState<string>("");
     const [tableError, setTableError] = useState<boolean>(false);
     const [tableDisabled, setTableDisabled] = useState<boolean>(false);
+    const [podGCU, setpodGCU] = useState<number>(0);
+    const [maxBinGCUDisabled, setMaxBinGCUDisabled] = useState<boolean>(false);
+    const [maxBinGCUError, setMaxBinGCUError] = useState<boolean>(false);
+    const [maxBinGCU, setMaxBinGCU] = useState<string>("1");
+    const [eachBinGCU, setEachBinGCU] = useState<any>([]);
 
     let binList: string[] = [];
     let binInfoList: any[] = [];
@@ -89,6 +95,7 @@ function ManualEval(props: any) {
     const [add_prod_to_bin, { data: addProdToBinData, loading: addProdToBinLoading, error: addProdToBinError }] = useMutation(ADD_PROD_TO_BIN_FOR_AN_EVAL);
     const { data: evalData, loading: evalLoading, error: evalError, refetch: evalRefetch } = useQuery(GET_ONE_EVAL);
     const { data: eachBinData, loading: eachBinDataLoading, error: eachBinDataErrorLoading, refetch: prodInBinEvalRefetch } = useQuery(GET_PROD_IN_BIN_FOR_EVAL);
+    const { data: oneProdData, loading: oneProdLoading, error: oneProdError, refetch: oneProdRefetch } = useQuery(GET_ONE_PROD);
 
     if ((BinLoading) || (prodLoading) || (evalLoading) || (eachBinDataLoading)) return <p>Loading...</p>;
     if (addProdToBinLoading) return <p>Submitting...</p>
@@ -100,6 +107,10 @@ function ManualEval(props: any) {
 
     for (let i = 0; i < Object.keys(BinData.getAllBins).length; i++) {
         binList.push(BinData.getAllBins[i].BinId);
+        let totVol = 0;
+        for (let j = 0; j < Object.keys(BinData.getAllBins[i].AmazonProducts).length; j++) {
+            totVol += BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_length * BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_width * BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_height;
+        }
         binInfoList.push(
             {
                 "binId": BinData.getAllBins[i].BinId,
@@ -108,7 +119,9 @@ function ManualEval(props: any) {
                 "depth": BinData.getAllBins[i].depth,
                 "width": BinData.getAllBins[i].width,
                 "height": BinData.getAllBins[i].height,
-                "units": BinData.getAllBins[i].dimensions_units
+                "units": BinData.getAllBins[i].dimensions_units,
+                "current_gcu": totVol / (BinData.getAllBins[i].depth * BinData.getAllBins[i].width * BinData.getAllBins[i].height),
+                "current_volume_of_prods": totVol
             }
         );
     }
@@ -141,15 +154,38 @@ function ManualEval(props: any) {
         setSubmitableBin(e.target.value);
         let binErr: boolean = true;
         let tableRelatedBin: string[] = [];
+        let cur_vol_of_prod = 0;
+        let bin_overall_vol = 0;
         for (let i = 0; i < binInfoList.length; i++) {
             if (binInfoList[i]["tableName"] == tableName) {
                 tableRelatedBin.push(binInfoList[i]["binId"]);
+
+                if (binInfoList[i]["binId"] == e.target.value) {
+                    cur_vol_of_prod = binInfoList[i]["current_volume_of_prods"]
+                    console.log(cur_vol_of_prod);
+                    bin_overall_vol = binInfoList[i]["height"] * binInfoList[i]["width"] * binInfoList[i]["depth"];
+                    console.log(bin_overall_vol)
+                }
             }
         }
         if (tableRelatedBin.includes(e.target.value)) {
-            console.log("true");
-            setisBinError(false);
-            binErr = false;
+            // Check if adding the item to the bin would cause us to go over the max bin gcu
+            let oneprod = await oneProdRefetch({ asin: submitableProd });
+            console.log(oneprod);
+            let volumeNewProd = oneprod.data.getProduct[0].size_height * oneprod.data.getProduct[0].size_width * oneprod.data.getProduct[0].size_length;
+            console.log(cur_vol_of_prod)
+            let new_gcu = (volumeNewProd + cur_vol_of_prod) / bin_overall_vol;
+            console.log(new_gcu);
+            if (new_gcu <= parseFloat(maxBinGCU)) {
+                console.log("true");
+                setisBinError(false);
+                binErr = false;
+            } else {
+                console.log("false");
+                setisBinError(true);
+                binErr = true;
+            }
+            
         } else {
             console.log("false");
             setisBinError(true);
@@ -194,9 +230,12 @@ function ManualEval(props: any) {
     async function generateTableHelper(table: any) {
         let listOfRows: JSX.Element[] = [];
         let count: number = 0;
+        let podVol: number = 0;
+        let totalObjVol: number = 0;
         for (let i = table.rows; i >= 1; i--) {
             let listOfItems: JSX.Element[] = [];
-            let podVol: number = 0;
+            let binVol: number = 0;
+            let rowVol: number = 0;
             for (let j = 1; j <= table.cols; j++) {
                 let binName1: string = j + String.fromCharCode(64 + i);
                 let binsize: string = "";
@@ -207,6 +246,7 @@ function ManualEval(props: any) {
                         binsizeunits = binInfoList[k]["units"];
                     }
                 }
+
                 let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1, tableName: tableName });
                 console.log(prods);
                 let tempAmzList = [];
@@ -230,19 +270,30 @@ function ManualEval(props: any) {
                 }
 
                 let binsizevals: string[] = binsize.split(" x ");
-                let binVol: number = parseFloat(binsizevals[0]) * parseFloat(binsizevals[1]) * parseFloat(binsizevals[2]);
+                binVol = parseFloat(binsizevals[0]) * parseFloat(binsizevals[1]) * parseFloat(binsizevals[2]);
+                rowVol += binVol;
                 let binGCU: number = allObjVol / binVol;
-                podVol += binVol;
+                totalObjVol += allObjVol;
+
+                for (let k = 0; k < binInfoList.length; k++) {
+                    if (binInfoList[k]["binName"] == binName1 && binInfoList[k]["tableName"] == tableName) {
+                        binInfoList[k]["current_gcu"] = parseFloat(binGCU.toString()).toFixed(2);
+                        binInfoList[k]["current_volume_of_prods"] = allObjVol;
+                    }
+                }
 
                 let tableData: JSX.Element = <TableCell><p>{binName1}</p><p>Total Volume: {binsize} {binsizeunits} = {binVol} {binsizeunits}^3</p><p>Bin GCU: {parseFloat(binGCU.toString()).toFixed(2)}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
                 listOfItems[j - 1] = tableData;
             }
+            podVol += rowVol;
             let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
             listOfRows[count] = tableRow;
             count++;
         }
+        setpodGCU(totalObjVol / podVol);
         let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
         setTable1Actual(tableJSX);
+        console.log(binInfoList);
     }
 
     async function generateTable() {
@@ -250,43 +301,6 @@ function ManualEval(props: any) {
             generateTableHelper(table1);
         } else if (submitableEvalName != "" && tableName == "2") {
             generateTableHelper(table2);
-            // let listOfRows: JSX.Element[] = [];
-            // let count: number = 0;
-            // for (let i = table2.rows; i >= 1; i--) {
-            //     let listOfItems: JSX.Element[] = [];
-            //     for (let j = 1; j <= table2.cols; j++) {
-            //         let binName1: string = j + String.fromCharCode(64 + i);
-            //         let binsize: string = "";
-            //         for (let k = 0; k < binInfoList.length; k++) {
-            //             if (binInfoList[k]["binName"] == binName1 && binInfoList[k]["tableName"] == tableName) {
-            //                 binsize = binInfoList[k]["width"] + " x " + binInfoList[k]["height"] + " x " + binInfoList[k]["depth"];
-            //             }
-            //         }
-            //         let prods = await prodInBinEvalRefetch({ evalName: submitableEvalName, binName: binName1, tableName: tableName });
-            //         console.log(prods);
-            //         let tempAmzList = [];
-            //         for (let i = 0; i < Object.keys(prods.data.getAmazonProductFromBinEval).length; i++) {
-            //             let prodAmz = {
-            //                 "name": prods.data.getAmazonProductFromBinEval[i].amazonProduct.name,
-            //                 "asin": prods.data.getAmazonProductFromBinEval[i].amazonProduct.asin,
-            //                 "id": prods.data.getAmazonProductFromBinEval[i].id,
-            //                 "size_length": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_length,
-            //                 "size_width": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width,
-            //                 "size_height": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height,
-            //                 "size_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_units,
-            //             }
-            //             tempAmzList.push(prodAmz);
-            //         }
-            //         console.log(tempAmzList);
-            //         let tableData: JSX.Element = <TableCell><p>{binName1}</p><p>Total Volume: {binsize}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
-            //         listOfItems[j - 1] = tableData;
-            //     }
-            //     let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
-            //     listOfRows[count] = tableRow;
-            //     count++;
-            // }
-            // let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
-            // setTable1Actual(tableJSX);
         }
     }
 
@@ -307,6 +321,15 @@ function ManualEval(props: any) {
             setTableError(true);
         }
 
+    }
+
+    function maxBinGCUButton() {
+        if (parseFloat(maxBinGCU) < 0 || parseFloat(maxBinGCU) > 1 || maxBinGCU == "") {
+            setMaxBinGCUError(true);
+        } else {
+            setMaxBinGCUError(false);
+            setMaxBinGCUDisabled(true);
+        }
     }
 
     return (
@@ -349,9 +372,17 @@ function ManualEval(props: any) {
                                 }
                                 label="Table 4"
                             />
-                            <Button variant="outlined" color="success" id="itemBinButton" onClick={tableNameOnClick}>Submit Table Choice</Button>
+                            <Button variant="outlined" color="success" onClick={tableNameOnClick}>Submit Table Choice</Button>
                         </RadioGroup>
                     </FormControl>
+                </div>
+
+                <div style={{ "display": "block", "margin": "15px" }}>
+                    <FormControl id="evalName" error={evalNameError} variant="standard">
+                        <FormLabel component="legend">Enter Maximum Bin GCU:</FormLabel>
+                        <Input disabled={maxBinGCUDisabled} error={maxBinGCUError} onChange={(e) => setMaxBinGCU(e.target.value)} value={maxBinGCU} placeholder="Max Bin GCU" />
+                    </FormControl>
+                    <Button variant="outlined" color="success" onClick={maxBinGCUButton}>Submit Max Bin GCU</Button>
                 </div>
 
                 {submitMessage != "" ? <p className="submitMessagebox">{submitMessage}</p> : <p></p>}
@@ -415,7 +446,7 @@ function ManualEval(props: any) {
                     Generate
                 </LoadingButton>
             </FormGroup>
-            <h3>Pod GCU: </h3>
+            <h3>Pod GCU: {parseFloat(podGCU.toString()).toFixed(3)}</h3>
             {table1Actual}
         </div>
 
