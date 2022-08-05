@@ -1,6 +1,6 @@
 import { useQuery, gql } from "@apollo/client";
 
-export const GET_ALL_BINS = gql `
+export const GET_ALL_BINS = gql`
     query getBins {
         getAllBins {
             BinId
@@ -14,6 +14,10 @@ export const GET_ALL_BINS = gql `
             AmazonProducts {
                 amazonProduct {
                     name
+                    size_length
+                    size_width
+                    size_height
+                    size_units
                     bins {
                         evaluation {
                             name
@@ -25,7 +29,7 @@ export const GET_ALL_BINS = gql `
     }
 `
 
-export const GET_ALL_PROD = gql `
+export const GET_ALL_PROD = gql`
 query getAllProds {
     getAllProducts {
       id
@@ -49,7 +53,40 @@ query getAllProds {
   }
 `
 
-export const GET_ONE_EVAL = gql `
+export const GET_ONE_PROD = gql`
+query getsingleprod($asin: String!) {
+    getProduct(filter: $asin) {
+        id
+        asin
+        name
+        size_length
+        size_width
+        size_height
+        size_units
+        weight
+        weight_units
+        attributes {
+          AttributeId
+          AmazonProductId
+          attribute {
+            id
+            value
+          }
+        }
+        bins {
+          bin {
+            BinId
+            BinName
+          }
+          evaluation {
+            name
+          }
+        }
+    }
+  }
+`
+
+export const GET_ONE_EVAL = gql`
 query getSingleEval($evalName:String!) {
     getOneEval(evalName: $evalName) {
         name
@@ -82,7 +119,7 @@ query getSingleEval($evalName:String!) {
 }
 `
 
-export const GET_PROD_IN_BIN_FOR_EVAL = gql `
+export const GET_PROD_IN_BIN_FOR_EVAL = gql`
 query getProdFromBinEval($binName: String!, $evalName: String!, $tableName:String!) {
     getAmazonProductFromBinEval(evalName: $evalName, binName: $binName, tableName:$tableName) {
            id
@@ -120,23 +157,23 @@ query getProdFromBinEval($binName: String!, $evalName: String!, $tableName:Strin
   }
 `
 
-export const GET_BINS_BY_TABLE = gql `
+export const GET_BINS_BY_TABLE = gql`
     query getBinsByTable($tableName: String!) {
         getBinByTable(tableName:$tableName) {
-        BinName
-        TableName
-        AmazonProducts {
-            id
-            amazonProduct {
-                name
-                asin
-                bins {
-                    evaluation {
-                        name
+            BinName
+            TableName
+            AmazonProducts {
+                id
+                amazonProduct {
+                    name
+                    asin
+                    bins {
+                        evaluation {
+                            name
+                        }
                     }
                 }
             }
-        }
         }
     }
 `
