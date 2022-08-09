@@ -59,13 +59,13 @@ function PickHandler(props: PickHandlerProps) {
                     }: any) => (
                         <>
                             <div>
-                                <Button variant="outlined" onClick={onSubmit} {...getRootProps()}>
+                                <Button id="pick-button" variant="outlined" onClick={onSubmit} {...getRootProps()}>
                                     Browse
                                 </Button>
-                                <div>
+                                <div id="text">
                                     {acceptedFile && acceptedFile.name}
                                 </div>
-                                <Button variant="outlined" color="error" {...getRemoveFileProps()}>
+                                <Button id="pick-button" variant="outlined" color="error" {...getRemoveFileProps()}>
                                     Remove
                                 </Button>
                             </div>
@@ -78,10 +78,11 @@ function PickHandler(props: PickHandlerProps) {
                 <textarea
                     id="pick-text-area"
                     onChange={(event) => setEvalTextArea(event.target.value)}
+                    onKeyPress={e => {(e.key === 'Enter') ? e.preventDefault():void(0)}}
                     value={evalTextArea}
                 /> <br/>
 
-                <Button variant="contained" color="success" onClick={onSubmit}>Submit</Button>
+                <Button id="pick-button" variant="contained" color="success" onClick={onSubmit}>Submit</Button>
 
             </div>
         </>

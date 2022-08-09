@@ -49,6 +49,7 @@
 #heading-text {
   font-family: sans-serif;
   font-size: 20pt;
+  padding-bottom: 7px;
 }
 
 #filter {
@@ -71,6 +72,12 @@
   border-radius: 10px;
   margin: 5px 0px;
   cursor: pointer;
+}
+
+#pick-button {
+  padding: 3px 20px;
+  margin-top: 3.5px;
+  margin-bottom: 3.5px;
 }
 
 #object-text-area {
@@ -100,9 +107,10 @@
 }
 
 #pick-text-area {
-  width: 15%;
+  width: 187px;
   height: 40px;
   padding: 8px 15px;
+  margin-bottom: 7px;
   box-sizing: border-box;
   border: 2px solid #ccc;
   border-radius: 10px;
