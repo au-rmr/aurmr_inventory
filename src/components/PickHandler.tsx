@@ -28,8 +28,8 @@ function PickHandler(props: PickHandlerProps) {
     }
 
     async function onSubmit() {
-        let productBinIds: number[] = [];
         if (uploadedData && evalTextArea) {
+            let productBinIds: number[] = [];
             console.log(uploadedData, evalTextArea);
             for (let i = 0; i < uploadedData.length; i++) {
                 const asinValue = uploadedData[i];
@@ -37,15 +37,15 @@ function PickHandler(props: PickHandlerProps) {
                 let value = await prodBinRefetch({asin: asinValue[1], binId: "P-5-M285U772", evalName: evalTextArea});
                 productBinIds.push(parseInt(value.data.getProductBinFromAmazonProductBinEval[0].id));
             }
+            addPickToSequence(productBinIds);
         }
-        addPickToSequence(productBinIds);
     }
 
     return (
         <>
 
             <div id = "left-content">
-            
+                <div id="heading-text">Upload File</div>
                 <CSVReader
                     onUploadAccepted={(results: any) => {
                         setUploadedData(results.data)
@@ -59,30 +59,30 @@ function PickHandler(props: PickHandlerProps) {
                     }: any) => (
                         <>
                             <div>
-                                <button type='button' {...getRootProps()}>
-                                    Select file
-                                </button>
+                                <Button variant="outlined" onClick={onSubmit} {...getRootProps()}>
+                                    Browse
+                                </Button>
                                 <div>
                                     {acceptedFile && acceptedFile.name}
                                 </div>
-                                <button {...getRemoveFileProps()}>
-                                    Remove file
-                                </button>
+                                <Button variant="outlined" color="error" {...getRemoveFileProps()}>
+                                    Remove
+                                </Button>
                             </div>
                             <ProgressBar/>
                         </>
                     )}
                 </CSVReader>
-
-
-                <div id="text">Evalution Name</div>
+                <br/>
+                <div id="heading-text">Evalution Name</div>
                 <textarea
                     id="pick-text-area"
                     onChange={(event) => setEvalTextArea(event.target.value)}
                     value={evalTextArea}
                 /> <br/>
 
-                <button id="button" onClick={onSubmit}>Submit</button>
+                <Button variant="contained" color="success" onClick={onSubmit}>Submit</Button>
+
             </div>
         </>
     );

@@ -46,6 +46,11 @@
   font-family: sans-serif;
 }
 
+#heading-text {
+  font-family: sans-serif;
+  font-size: 20pt;
+}
+
 #filter {
   font-family: sans-serif;
   padding-left: 46%;
@@ -109,4 +114,5 @@
 
 #left-content {
   padding-left: 53px;
+  padding-top: 20px;
 }
