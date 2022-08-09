@@ -14,6 +14,8 @@ type Query {
   getAmazonProductFromBinEval(evalName: String!, binName: String!): [AmazonProduct]
 
   getAllBins: [Bin]
+
+  getProductBinFromAmazonProductBinEval(binId: String!, asin: String!, evalName: String!): [ProductBin]
 }
 
 type Mutation {
@@ -34,6 +36,8 @@ type Mutation {
   deleteAttribute(attribute: ID!): AmazonProduct
 
   addPick(ProductBinId: Int!, Outcome: Boolean, TimeTakenSec: Float): Pick!
+
+  addPickWithOnlyProdBin(ProductBinId: Int!): Pick!
 
   addEval(name: String!): Evaluation!
 

@@ -12,10 +12,10 @@ module.exports = {
                     },
                     bins: {
                         include: {
-                            bin: true, 
+                            bin: true,
                             evaluation: true
                         }
-                    }, 
+                    },
 
                 }
             })
@@ -133,15 +133,15 @@ module.exports = {
                                 equals: {
                                     BinName: args.binName
                                 }
-                            }, 
+                            },
                             evaluation: {
                                 equals: {
                                     name: args.evalName
-                                }                                
-                            } 
-                        }                                               
+                                }
+                            }
+                        }
                     }
-                }, 
+                },
                 include: {
                     attributes: {
                         include: {
@@ -150,14 +150,31 @@ module.exports = {
                     },
                     bins: {
                         include: {
-                            bin: true, 
+                            bin: true,
                             evaluation: true
                         }
-                    }, 
+                    },
 
                 }
             })
             return prods;
+        },
+
+        getProductBinFromAmazonProductBinEval: (_, args, context) => {
+            const prodBins = context.prisma.productBin.findMany({
+                where: {
+                    bin: {
+                        BinId: args.binId
+                    },
+                    evaluation: {
+                        name: args.evalName
+                    },
+                    amazonProduct: {
+                        asin: args.asin
+                    },
+                }
+            })
+            return prodBins;
         },
 
         getAllBins: (_, args, context) => {
@@ -341,6 +358,28 @@ module.exports = {
                 data: {
                     Outcome: args.Outcome,
                     TimeTakenSec: args.TimeTakenSec,
+                    ProductFromBin: {
+                        connect: {
+                            id: args.ProductBinId
+                        }
+                    }
+                },
+                include: {
+                    ProductFromBin: {
+                        include: {
+                            amazonProduct: true,
+                            bin: true,
+                            evaluation: true
+                        }
+                    }
+                }
+            })
+            return addPick
+        },
+
+        addPickWithOnlyProdBin: async (_, args, context, info) => {
+            const addPick = context.prisma.pick.create({
+                data: {
                     ProductFromBin: {
                         connect: {
                             id: args.ProductBinId

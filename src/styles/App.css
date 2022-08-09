@@ -93,3 +93,20 @@
   font-family:sans-serif;
   resize: none;
 }
+
+#pick-text-area {
+  width: 15%;
+  height: 40px;
+  padding: 8px 15px;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background-color: #f8f8f8;
+  font-size: 16px;
+  font-family:sans-serif;
+  resize: none;
+}
+
+#left-content {
+  padding-left: 53px;
+}

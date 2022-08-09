@@ -36,16 +36,14 @@ function Generator(props:GeneratorProps) {
 
     return (
         <>
-            <div id = "num-bins">
-                <div id="text">Number of objects:</div>
-                <textarea
-                    id="object-text-area"
-                    rows={5}
-                    cols={30}
-                    onChange={(event) => setTextArea(event.target.value)}
-                    value={textArea}
-                /> <br/>
-            </div>
+            <div id="text">Number of objects:</div>
+            <textarea
+                id="object-text-area"
+                rows={5}
+                cols={30}
+                onChange={(event) => setTextArea(event.target.value)}
+                value={textArea}
+            /> <br/>
 
             <div onChange={(event:any) => setCurrentTable(event.target.value)}>
                 <input type="radio" value="Table 1" checked={currentTable === "Table 1"}/> Table 1

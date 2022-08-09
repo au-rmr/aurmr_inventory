@@ -71,3 +71,15 @@ query getSingleEval($evalName:String!) {
     }
 }
 `
+
+export const GET_PROD_BIN_IDS = gql`
+    query getProdBinIds($asin: String!, $binId: String!, $evalName: String!) {
+        getProductBinFromAmazonProductBinEval(
+            asin: $asin,
+            binId: $binId,
+            evalName: $evalName
+        ){
+            id
+        }
+    }
+`
