@@ -177,3 +177,43 @@ export const GET_BINS_BY_TABLE = gql`
         }
     }
 `
+
+export const GET_ONE_BIN_BY_TABLE_BINNAME = gql`
+  query getBinFromTableAndBinName($tableName: String!, $binName: String!) {
+    getBinByBinNameTable(binName:$binName, tableName: $tableName) {
+      BinName
+      height
+      width
+      depth
+      dimensions_units
+      BinId
+      TableName
+    }
+  }
+`
+
+export const GET_BIN_FROM_BINID = gql `
+query getBinBinid($binId: String!) {
+  getBinByBinId(binId:$binId) {
+    BinName
+    height
+    width
+    depth
+    dimensions_units
+    BinId
+    TableName
+    AmazonProducts {
+      amazonProduct {
+        asin
+        name
+        size_width
+        size_length
+        size_height
+        size_units
+        weight
+        weight_units
+      }
+    }
+  }
+}
+`

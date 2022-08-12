@@ -38,3 +38,12 @@
     border-color: green;
     border-radius: 5px;
 }
+
+.binLabel {
+    border: solid;
+    border-radius: 50%;
+    width: 25px;
+    padding-left: 5px;
+    border-color: yellowgreen;
+    background-color: yellowgreen;
+}

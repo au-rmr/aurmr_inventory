@@ -199,6 +199,32 @@ module.exports = {
                 } 
             })
             return bins
+        }, 
+
+        getBinByBinNameTable: (_, args, context) => {
+            const bin = context.prisma.bin.findFirst({
+                where: {
+                    TableName: args.tableName,
+                    BinName: args.binName
+                }
+            })
+            return bin;
+        }, 
+
+        getBinByBinId: (_, args, context) => {
+            const bin = context.prisma.bin.findFirst({
+                where: {
+                    BinId: args.binId
+                }, 
+                include: {
+                    AmazonProducts: {
+                        include: {
+                            amazonProduct: true
+                        }
+                    }
+                }
+            })
+            return bin;
         }
 
     },

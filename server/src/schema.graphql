@@ -16,6 +16,10 @@ type Query {
   getAllBins: [Bin]
 
   getBinByTable(tableName: String!): [Bin]
+
+  getBinByBinNameTable(binName: String!, tableName: String!): Bin
+
+  getBinByBinId(binId: String!): Bin
 }
 
 type Mutation {

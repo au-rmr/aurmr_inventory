@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import "../styles/ManualEval.css";
 import { useRef } from 'react';
 
@@ -11,6 +11,7 @@ import { ADD_PROD_TO_BIN_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { GET_ONE_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_PROD_IN_BIN_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_ONE_PROD } from '../GraphQLQueriesMuts/Query';
+import { GET_BIN_FROM_BINID } from '../GraphQLQueriesMuts/Query';
 import { convertCompilerOptionsFromJson, JsxEmit } from 'typescript';
 
 import FormLabel from '@mui/material/FormLabel';
@@ -37,6 +38,10 @@ import Radio from "@mui/material/Radio";
 import Table from '@mui/material/Table';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
+
+import { matrix, subtract, row } from 'mathjs';
+
+import ROSLIB from "roslib";
 
 interface ManualEvalProps {
 
@@ -85,6 +90,12 @@ function ManualEval(props: any) {
     const [maxBinGCUError, setMaxBinGCUError] = useState<boolean>(false);
     const [maxBinGCU, setMaxBinGCU] = useState<string>("1");
     const [eachBinGCU, setEachBinGCU] = useState<any>([]);
+    const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
+
+    const ErrorAudio = new Audio(".../public/ErrorSound.mp3");
+    useEffect(() => {
+        ErrorAudio.load();
+    })
 
     let binList: string[] = [];
     let binInfoList: any[] = [];
@@ -96,6 +107,7 @@ function ManualEval(props: any) {
     const { data: evalData, loading: evalLoading, error: evalError, refetch: evalRefetch } = useQuery(GET_ONE_EVAL);
     const { data: eachBinData, loading: eachBinDataLoading, error: eachBinDataErrorLoading, refetch: prodInBinEvalRefetch } = useQuery(GET_PROD_IN_BIN_FOR_EVAL);
     const { data: oneProdData, loading: oneProdLoading, error: oneProdError, refetch: oneProdRefetch } = useQuery(GET_ONE_PROD);
+    const { data: OneBinData, loading: OneBinLoading, error: OneBinError, refetch: OneBinRefetch } = useQuery(GET_BIN_FROM_BINID);
 
     if ((BinLoading) || (prodLoading) || (evalLoading) || (eachBinDataLoading)) return <p>Loading...</p>;
     if (addProdToBinLoading) return <p>Submitting...</p>
@@ -134,63 +146,156 @@ function ManualEval(props: any) {
         console.log(e.target.value);
         setSubmitableProd(e.target.value);
         let asinErr: boolean = true;
-        if (prodList.includes(e.target.value)) {
-            console.log("true");
-            setisAsinError(false);
-            asinErr = false;
-            refBin.current!.focus();
+        let getProdFromDB = (await oneProdRefetch({ asin: e.target.value }));
+        if (getProdFromDB.data.getProduct.length != 0) {
+            if (getProdFromDB.data.getProduct[0].size_units != "Unavailable") {
+                console.log("true");
+                setisAsinError(false);
+                asinErr = false;
+                setBinIdDisabled(false);
+                refBin.current!.focus();                
+            } else {
+                console.log("Product doesn't have size information in the DB.");
+                setisAsinError(true);
+                setBinIdDisabled(true);
+                asinErr = true;
+                return;
+            }
         } else {
-            console.log("false");
+            console.log("Product doesn't exist.");
             setisAsinError(true);
+            setBinIdDisabled(true);
             asinErr = true;
+            return;
         }
         if (autoOrManual != "Manual") {
             submitIfComplete(asinErr, isBinError, e.target.value, submitableBin);
         }
     }
 
+    const objOrientationChosen = (prodLen: number, prodWid: number, prodHt: number, binHt: number, binWid: number, binDepth: number, lenFromWid: number): number => {
+        const binMatrix = matrix([
+            [binHt, binWid - lenFromWid, binDepth],
+            [binHt, binWid - lenFromWid, binDepth],
+            [binHt, binWid - lenFromWid, binDepth],
+            [binHt, binWid - lenFromWid, binDepth],
+            [binHt, binWid - lenFromWid, binDepth],
+            [binHt, binWid - lenFromWid, binDepth]
+        ]);
+        console.log(binMatrix);
+        const prodMatrix = matrix([
+            [prodLen, prodWid, prodHt],
+            [prodLen, prodHt, prodWid],
+            [prodWid, prodHt, prodLen],
+            [prodHt, prodLen, prodWid],
+            [prodHt, prodWid, prodLen],
+            [prodWid, prodLen, prodHt]
+        ])
+        console.log(prodMatrix);
+        let subtractedMatrix = subtract(binMatrix, prodMatrix);
+        // let orientationLenChosen = 0;
+        console.log(subtractedMatrix);
+        let listOfOrientations: number[] = [];
+        for (let i = 0; i < 6; i++) {
+            let x = subtractedMatrix.get([i, 0]);
+            let y = subtractedMatrix.get([i, 1]);
+            let z = subtractedMatrix.get([i, 2]);
+            if (x >= 0 && y >= 0 && z >= 0) {
+                // orientationLenChosen = prodMatrix.get([i, 1]);
+                listOfOrientations[listOfOrientations.length] = row(prodMatrix, i).get([0, 1]);
+                // console.log(orientationLenChosen);
+                // return orientationLenChosen;
+            }
+        }
+        if (listOfOrientations.length == 0) {
+            return -1;
+        }
+        return Math.min(...listOfOrientations);
+    }
+
     const checkValidBin = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        console.log(e.target.value);
         setSubmitableBin(e.target.value);
+        let binListToCheck = [];
+        let count = 0;
         let binErr: boolean = true;
-        let tableRelatedBin: string[] = [];
-        let cur_vol_of_prod = 0;
-        let bin_overall_vol = 0;
         for (let i = 0; i < binInfoList.length; i++) {
             if (binInfoList[i]["tableName"] == tableName) {
-                tableRelatedBin.push(binInfoList[i]["binId"]);
+                binListToCheck[count] = binInfoList[i]["binId"];
+                count++;
+            }
+        }
+        console.log(binListToCheck)
+        if (binListToCheck.includes(e.target.value)) {
+            console.log(tableName)
+            let oneBinSpecific = await OneBinRefetch({ binId: e.target.value })
+            console.log(oneBinSpecific);
+            let binDepth = oneBinSpecific.data.getBinByBinId.depth;
+            let binWidth = oneBinSpecific.data.getBinByBinId.width;
+            let binHeight = oneBinSpecific.data.getBinByBinId.height;
+            let volumeOfBin = binDepth * binHeight * binWidth;
+            let volumeOfProds: number = 0;
+            let lengthFromWidth: number = 0;
+            for (let a = 0; a < oneBinSpecific.data.getBinByBinId.AmazonProducts.length; a++) {
+                if (oneBinSpecific.data.getBinByBinId.AmazonProducts[a].amazonProduct.size_units != "Unavailable") {
+                    let prodCurrHeight = parseFloat(oneBinSpecific.data.getBinByBinId.AmazonProducts[a].amazonProduct.size_height);
+                    let prodCurrWidth = parseFloat(oneBinSpecific.data.getBinByBinId.AmazonProducts[a].amazonProduct.size_width);
+                    let prodCurrLength = parseFloat(oneBinSpecific.data.getBinByBinId.AmazonProducts[a].amazonProduct.size_length);
+                    volumeOfProds += prodCurrHeight * prodCurrWidth * prodCurrLength;
 
-                if (binInfoList[i]["binId"] == e.target.value) {
-                    cur_vol_of_prod = binInfoList[i]["current_volume_of_prods"]
-                    console.log(cur_vol_of_prod);
-                    bin_overall_vol = binInfoList[i]["height"] * binInfoList[i]["width"] * binInfoList[i]["depth"];
-                    console.log(bin_overall_vol)
+                    let choosedOrient = objOrientationChosen(prodCurrLength, prodCurrWidth, prodCurrHeight, binHeight, binWidth, binDepth, lengthFromWidth);
+
+                    if (choosedOrient != -1) {
+                        lengthFromWidth += choosedOrient;
+                    }
+
+                } else {
+                    setisBinError(true);
+                    binErr = true;
+                    console.log("Error: Bin Size is unavailabe in the DB")
+                    return;
                 }
             }
-        }
-        if (tableRelatedBin.includes(e.target.value)) {
-            // Check if adding the item to the bin would cause us to go over the max bin gcu
-            let oneprod = await oneProdRefetch({ asin: submitableProd });
-            console.log(oneprod);
-            let volumeNewProd = oneprod.data.getProduct[0].size_height * oneprod.data.getProduct[0].size_width * oneprod.data.getProduct[0].size_length;
-            console.log(cur_vol_of_prod)
-            let new_gcu = (volumeNewProd + cur_vol_of_prod) / bin_overall_vol;
-            console.log(new_gcu);
-            if (new_gcu <= parseFloat(maxBinGCU)) {
-                console.log("true");
-                setisBinError(false);
-                binErr = false;
-            } else {
-                console.log("false");
+            console.log(volumeOfProds);
+            let newProdToAdd = (await oneProdRefetch({ asin: submitableProd })).data.getProduct[0];
+            console.log(newProdToAdd);
+            let newProdHeight = newProdToAdd.size_height;
+            let newProdLength = newProdToAdd.size_length;
+            let newProdWidth = newProdToAdd.size_width;
+            let volumeOfNewProd = newProdHeight * newProdLength * newProdWidth;
+            if (volumeOfProds + volumeOfNewProd > volumeOfBin - volumeOfProds) {
                 setisBinError(true);
                 binErr = true;
+                console.log("Error: Volume will go above the available volume of the bin.")
+                return;
+            } else {
+                let newGCU = (volumeOfProds + volumeOfNewProd) / volumeOfBin;
+                if (newGCU > parseFloat(maxBinGCU)) {
+                    setisBinError(true);
+                    binErr = true;
+                    console.log("Error: The New GCU will go above the specified max GCU.")
+                    return;
+                } else {
+                    // Figure out the W - l value for the bin from the items that are currently present in the bin. 
+                    if (objOrientationChosen(newProdLength, newProdWidth, newProdHeight, binHeight, binWidth, binDepth, lengthFromWidth) == -1) {
+                        setisBinError(true);
+                        binErr = true;
+                        console.log("Error: The orientation doesn't fit in the bin.")
+                        return;
+                    } else {
+                        setisBinError(false);
+                        binErr = false;
+                        console.log("No errors.");
+                    }
+                }
             }
-            
         } else {
-            console.log("false");
             setisBinError(true);
             binErr = true;
+            console.log("Error: This bin Id doesn't exist.")
+            ErrorAudio.play();
+            return;
         }
+
         if (autoOrManual != "Manual") {
             submitIfComplete(isASINError, binErr, submitableProd, e.target.value);
         }
@@ -282,7 +387,17 @@ function ManualEval(props: any) {
                     }
                 }
 
-                let tableData: JSX.Element = <TableCell><p>{binName1}</p><p>Total Volume: {binsize} {binsizeunits} = {binVol} {binsizeunits}^3</p><p>Bin GCU: {parseFloat(binGCU.toString()).toFixed(2)}</p><Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell></TableCell>
+                let tableData: JSX.Element =
+                    <TableCell>
+                        <p className="binLabel">{binName1}</p>
+                        <p style={{"backgroundColor": getGreenToRed(((parseFloat(parseFloat(binGCU.toString()).toFixed(2))) / (parseFloat(maxBinGCU))) * 100)}}>Bin GCU: {parseFloat(binGCU.toString()).toFixed(2)}</p>
+                        <details>
+                            {tempAmzList.length == 0 ? <summary>No Items.</summary> : <summary>Item List ({tempAmzList.length}): </summary>}
+                            <p>Total Volume: {binsize} {binsizeunits} = {binVol} {binsizeunits}^3</p>
+                            <Cell amazonProduct={tempAmzList} generateTable={generateTable}></Cell>
+                        </details>
+                    </TableCell>
+
                 listOfItems[j - 1] = tableData;
             }
             podVol += rowVol;
@@ -291,7 +406,7 @@ function ManualEval(props: any) {
             count++;
         }
         setpodGCU(totalObjVol / podVol);
-        let tableJSX: JSX.Element = <Table>{listOfRows}</Table>;
+        let tableJSX: JSX.Element = <Table aria-label="a dense table">{listOfRows}</Table>;
         setTable1Actual(tableJSX);
         console.log(binInfoList);
     }
@@ -332,6 +447,42 @@ function ManualEval(props: any) {
         }
     }
 
+    function onClickUndo() {
+        setisAsinError(false);
+        setisBinError(false);
+        setSubmitableProd("");
+        setSubmitableBin("");
+        setBinIdDisabled(true);
+        refASIN.current!.focus();
+    }
+
+    function onClickReset() {
+        console.log("hello")
+        setisAsinError(false);
+        setisBinError(false);
+        setSubmitableProd("");
+        setSubmitableBin("");
+        setEvalNameDisabled(false);
+        setEvalNameError(false);
+        setSubmitableEvalName("");
+        setTable1Actual(<table></table>);
+        setTableName("");
+        setTableError(false);
+        setTableDisabled(false);
+        setpodGCU(0);
+        setMaxBinGCU("");
+        setMaxBinGCUDisabled(false);
+        setMaxBinGCUError(false);
+        setBinIdDisabled(true);
+        refASIN.current!.focus();
+    }
+
+    function getGreenToRed(percent: number){
+        let r: number = percent>50 ? 255 : Math.floor((percent*2)*255/100);
+        let g: number = percent<50 ? 255 : Math.floor(255-(percent*2-100)*255/100);
+        return 'rgb('+r+','+g+',0)';
+    }
+
     return (
         <div id="overall">
             <h1>Manual Evaluation</h1>
@@ -339,38 +490,38 @@ function ManualEval(props: any) {
                 <div style={{ "display": "block", "margin": "15px" }}>
                     <FormControl id="evalName" error={evalNameError} variant="standard">
                         <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
-                        <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
+                        <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name"/>
                     </FormControl>
                     <Button variant="outlined" color="success" id="itemBinButton" onClick={evalNameOnClick}>Submit Evaluation Name</Button>
                 </div>
 
                 <div style={{ "display": "block", "margin": "15px" }}>
                     <FormControl error={tableError} disabled={tableDisabled}>
-                        <FormLabel component="legend">Pick a table</FormLabel>
+                        <FormLabel component="legend">Pick a Pod</FormLabel>
                         <RadioGroup value={tableName} row>
                             <FormControlLabel
                                 control={
                                     <Radio onChange={(e) => setTableName("1")} value="1" name="1" />
                                 }
-                                label="Table 1 (6-inch)"
+                                label="Pod 1 (6-inch)"
                             />
                             <FormControlLabel
                                 control={
                                     <Radio onChange={(e) => setTableName("2")} value="2" name="2" />
                                 }
-                                label="Table 2 (14-inch)"
+                                label="Pod 2 (14-inch)"
                             />
                             <FormControlLabel
                                 control={
                                     <Checkbox disabled name="3" />
                                 }
-                                label="Table 3"
+                                label="Pod 3"
                             />
                             <FormControlLabel
                                 control={
                                     <Checkbox disabled name="4" />
                                 }
-                                label="Table 4"
+                                label="Pod 4"
                             />
                             <Button variant="outlined" color="success" onClick={tableNameOnClick}>Submit Table Choice</Button>
                         </RadioGroup>
@@ -415,7 +566,10 @@ function ManualEval(props: any) {
                                 <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
                                 <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
                             </FormControl>
-
+                            <div>
+                                <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
+                                <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                            </div>
                         </div>
                         :
                         <div id="rightForm">
@@ -427,15 +581,22 @@ function ManualEval(props: any) {
 
                             <FormControl id="binInput" error={isBinError} variant="standard">
                                 <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
-                                <Input inputRef={refBin} onChange={checkValidBin} value={submitableBin} error={isBinError} id="binid" placeholder="Bin Id" />
+                                <Input disabled={binIdDisabled} inputRef={refBin} onChange={checkValidBin} value={submitableBin} error={isBinError} id="binid" placeholder="Bin Id" />
                             </FormControl>
                             <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
+
+                            <div>
+                                <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
+                                <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                            </div>
                         </div>
                     }
+
                 </div>
+
                 <Button variant="contained" id="submitEvalButton" >Submit Evaluation {submitableEvalName}</Button>
             </div>
-            <FormGroup row>
+            <FormGroup row style={{"marginTop": "20px"}}>
                 <LoadingButton
                     loading={loading}
                     loadingPosition="start"
