@@ -39,9 +39,10 @@ import Table from '@mui/material/Table';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 
-import { matrix, subtract, row } from 'mathjs';
+import { matrix, subtract, row, ResultSetDependencies } from 'mathjs';
 
 import ROSLIB from "roslib";
+import { useROS } from "react-ros";
 
 interface ManualEvalProps {
 
@@ -53,6 +54,8 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
+
+
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
 
@@ -93,8 +96,31 @@ function ManualEval(props: any) {
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
 
     const ErrorAudio = new Audio(".../public/ErrorSound.mp3");
+
+    // const [ros, setRos] = useState<any>(new ROSLIB.Ros({
+    //     url: 'ws://control:9090'
+    // }));
+    // const [robotServiceClient, setRobotServiceClient] = useState<any>(new ROSLIB.Service({
+    //     ros: ros,
+    //     name: "/aurmr_demo/stow",
+    //     serviceType: "/aurmr_tasks/StowRequest"
+    // }));
+    let { isConnected } = useROS();
+    var robotServiceClient: any;
     useEffect(() => {
         ErrorAudio.load();
+
+        if (!isConnected) {
+            var ros = new ROSLIB.Ros({
+                url: 'ws://control:9090'
+            });
+    
+            robotServiceClient = new ROSLIB.Service({
+                ros: ros,
+                name: "/aurmr_demo/stow",
+                serviceType: "/aurmr_tasks/StowRequest"
+            });
+        }        
     })
 
     let binList: string[] = [];
@@ -153,7 +179,7 @@ function ManualEval(props: any) {
                 setisAsinError(false);
                 asinErr = false;
                 setBinIdDisabled(false);
-                refBin.current!.focus();                
+                refBin.current!.focus();
             } else {
                 console.log("Product doesn't have size information in the DB.");
                 setisAsinError(true);
@@ -315,6 +341,7 @@ function ManualEval(props: any) {
             refASIN.current!.focus();
             console.log(await evalRefetch({ evalName: submitableEvalName }));
             generateTable();
+            sendRequestToRobot(submitableBin, submitableProd);
         }
     }
 
@@ -329,6 +356,7 @@ function ManualEval(props: any) {
             setisBinError(false);
             refASIN.current!.focus();
             generateTable();
+            sendRequestToRobot(submitableBin, submitableProd);
         }
     }
 
@@ -390,7 +418,7 @@ function ManualEval(props: any) {
                 let tableData: JSX.Element =
                     <TableCell>
                         <p className="binLabel">{binName1}</p>
-                        <p style={{"backgroundColor": getGreenToRed(((parseFloat(parseFloat(binGCU.toString()).toFixed(2))) / (parseFloat(maxBinGCU))) * 100)}}>Bin GCU: {parseFloat(binGCU.toString()).toFixed(2)}</p>
+                        <p style={{ "backgroundColor": getGreenToRed(((parseFloat(parseFloat(binGCU.toString()).toFixed(2))) / (parseFloat(maxBinGCU))) * 100) }}>Bin GCU: {parseFloat(binGCU.toString()).toFixed(2)}</p>
                         <details>
                             {tempAmzList.length == 0 ? <summary>No Items.</summary> : <summary>Item List ({tempAmzList.length}): </summary>}
                             <p>Total Volume: {binsize} {binsizeunits} = {binVol} {binsizeunits}^3</p>
@@ -477,10 +505,24 @@ function ManualEval(props: any) {
         refASIN.current!.focus();
     }
 
-    function getGreenToRed(percent: number){
-        let r: number = percent>50 ? 255 : Math.floor((percent*2)*255/100);
-        let g: number = percent<50 ? 255 : Math.floor(255-(percent*2-100)*255/100);
-        return 'rgb('+r+','+g+',0)';
+    function getGreenToRed(percent: number) {
+        let r: number = percent > 50 ? 255 : Math.floor((percent * 2) * 255 / 100);
+        let g: number = percent < 50 ? 255 : Math.floor(255 - (percent * 2 - 100) * 255 / 100);
+        return 'rgb(' + r + ',' + g + ',0)';
+    }
+
+    function sendRequestToRobot(binId: string, prodBinId: string) {
+        var request = new ROSLIB.ServiceRequest({
+            bin_id: binId,
+            object_id: prodBinId
+        });
+
+        robotServiceClient.callService(request, function (result: any) {
+            console.log("Received back from the Robot: " +
+                robotServiceClient.name +
+                ': ' +
+                result)
+        });
     }
 
     return (
@@ -490,7 +532,7 @@ function ManualEval(props: any) {
                 <div style={{ "display": "block", "margin": "15px" }}>
                     <FormControl id="evalName" error={evalNameError} variant="standard">
                         <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
-                        <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name"/>
+                        <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
                     </FormControl>
                     <Button variant="outlined" color="success" id="itemBinButton" onClick={evalNameOnClick}>Submit Evaluation Name</Button>
                 </div>
@@ -596,7 +638,7 @@ function ManualEval(props: any) {
 
                 <Button variant="contained" id="submitEvalButton" >Submit Evaluation {submitableEvalName}</Button>
             </div>
-            <FormGroup row style={{"marginTop": "20px"}}>
+            <FormGroup row style={{ "marginTop": "20px" }}>
                 <LoadingButton
                     loading={loading}
                     loadingPosition="start"
