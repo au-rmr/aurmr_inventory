@@ -16,6 +16,10 @@ type Query {
   getAllBins: [Bin]
 
   getProductBinFromAmazonProductBinEval(binId: String!, asin: String!, evalName: String!): [ProductBin]
+
+  getPicksFromProductBin(ProductBinId: Int!): [Pick]
+
+  getAmazonProductFromEval(evalName: String!, asin: String!): [AmazonProduct]
 }
 
 type Mutation {
