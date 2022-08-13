@@ -2,30 +2,33 @@ import './../styles/App.css';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-tag';
 import { useQuery, useMutation } from '@apollo/client';
-import { Button, FormControl, FormLabel, Input, InputLabel } from '@mui/material';
+import { Button, FormControl, FormLabel, Input, InputLabel, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { GET_PROD_BIN_IDS, GET_PICKS_FROM_PROD_BIN_IDS, GET_PROD_FROM_EVAL } from '../GraphQLQueriesMuts/Query';
 import { ADD_PICK_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { useCSVReader } from 'react-papaparse';
+import { rows } from '../Constants';
+import ObjectTable from './ObjectTable'
 
 interface PickHandlerProps {
 }
 
-interface tableObject {
+interface TableObject {
     asin: string,
     productName: string,
     productBinId: number,
     binName: string,
 }
+
 function PickHandler(props: PickHandlerProps) {
     const [evalTextArea, setEvalTextArea] = useState<string>("");
     const [uploadedData, setUploadedData] = useState<string[]>();
-    const [objects, setObjects] = useState<tableObject[]>([]);
+    const [objects, setObjects] = useState<TableObject[]>([]);
     const [errorObjects, setErrorObjects] = useState<string[]>([]);
     const { CSVReader } = useCSVReader();
-    const { data: getProdBinData, loading: getProdBinLoading, error: getProdBinError, refetch: prodBinRefetch } = useQuery(GET_PROD_BIN_IDS);
+    const { refetch: prodBinRefetch } = useQuery(GET_PROD_BIN_IDS);
     const { refetch: picksFromProdBinRefetch } = useQuery(GET_PICKS_FROM_PROD_BIN_IDS);
     const { refetch: prodFromEvalRefetch } = useQuery(GET_PROD_FROM_EVAL);
-    const [add_pick, { data: addPickData, loading: addPickLoading, error: addPickError }] = useMutation(ADD_PICK_FOR_AN_EVAL);
+    const [add_pick] = useMutation(ADD_PICK_FOR_AN_EVAL);
 
     async function onSubmit() {
         if (uploadedData && evalTextArea) {
@@ -65,16 +68,8 @@ function PickHandler(props: PickHandlerProps) {
         }
     }
 
-    function renderError() {
-        if (addPickLoading) return <p>Submitting...</p>
-        if (addPickError) return <p>Error: {addPickError.message}</p>
-        if (getProdBinLoading) return <p>Loading...</p>
-        if (getProdBinError) return <p>Error: {getProdBinError.message}</p>
-    }
-
     return (
         <>
-            {renderError()}
             <div id = "left-content">
                 <div id="heading-text">Upload File</div>
                 <CSVReader
@@ -121,13 +116,13 @@ function PickHandler(props: PickHandlerProps) {
                 <Button id="pick-button" variant="contained" color="success" onClick={onSubmit}>Submit</Button>
                 
             </div>
+            
             <div id="left-content">
                 <div id="heading-text">Non-Error Object ASINs</div>
-                {
-                    objects && objects.map((value, index) => {
-                        return (<div key={index} id="text">{value.asin}</div>)
-                    })
-                }
+            </div>
+            <ObjectTable objectList={objects}/>
+
+            <div id="left-content">
                 <div id="heading-text">Error Object ASINs</div>
                 {
                     errorObjects && errorObjects.map((value, index) => {
