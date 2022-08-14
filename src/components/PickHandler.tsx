@@ -31,6 +31,8 @@ function PickHandler(props: PickHandlerProps) {
     const [add_pick] = useMutation(ADD_PICK_FOR_AN_EVAL);
 
     async function onSubmit() {
+        setObjects([]);
+        setErrorObjects([]);
         if (uploadedData && evalTextArea) {
             for (let i = 0; i < uploadedData.length; i++) {
                 const asinValue = uploadedData[i];
@@ -118,7 +120,7 @@ function PickHandler(props: PickHandlerProps) {
             </div>
             
             <div id="left-content">
-                <div id="heading-text">Non-Error Object ASINs</div>
+                <div id="heading-text">Non-Error Object Info</div>
             </div>
             <ObjectTable objectList={objects}/>
 
