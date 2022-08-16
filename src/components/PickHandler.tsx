@@ -1,14 +1,11 @@
 import './../styles/App.css';
-import { useEffect, useState } from 'react';
-import { gql } from 'graphql-tag';
+import { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
-import { Button, FormControl, FormLabel, Input, InputLabel, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Button } from '@mui/material';
 import { GET_PROD_BIN_IDS, GET_PICKS_FROM_PROD_BIN_IDS, GET_PROD_FROM_EVAL } from '../GraphQLQueriesMuts/Query';
 import { ADD_PICK_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { useCSVReader } from 'react-papaparse';
-import { rows } from '../Constants';
 import ObjectTable from './ObjectTable';
-import StopWatch from './StopWatch';
 
 interface PickHandlerProps {
 }
@@ -167,8 +164,6 @@ function PickHandler(props: PickHandlerProps) {
                     })
                 }
             </div>
-
-            {/* <StopWatch/> */}
         </>
     );
     
