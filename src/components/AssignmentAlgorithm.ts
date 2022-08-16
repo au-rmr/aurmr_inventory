@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-export const getRandomObjectsFromList = (n: number, objects: string[]) =>  {
+export const getRandomObjectsFromList = (n: number, objects: any[]) =>  {
     let output: any[] = [];
     for (let i = 0; i < n; i++) {
         output.push(_.sample(objects));

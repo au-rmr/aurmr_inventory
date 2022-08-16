@@ -7,7 +7,8 @@ import { GET_PROD_BIN_IDS, GET_PICKS_FROM_PROD_BIN_IDS, GET_PROD_FROM_EVAL } fro
 import { ADD_PICK_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { useCSVReader } from 'react-papaparse';
 import { rows } from '../Constants';
-import ObjectTable from './ObjectTable'
+import ObjectTable from './ObjectTable';
+import StopWatch from './StopWatch';
 
 interface PickHandlerProps {
 }
@@ -15,14 +16,15 @@ interface PickHandlerProps {
 interface TableObject {
     asin: string,
     productName: string,
-    productBinId: number,
+    productBinId: any,
     binName: string,
 }
 
 function PickHandler(props: PickHandlerProps) {
     const [evalTextArea, setEvalTextArea] = useState<string>("");
+    const [pickTextArea, setPickTextArea] = useState<string>("");
     const [uploadedData, setUploadedData] = useState<string[]>();
-    const [objects, setObjects] = useState<TableObject[]>([]);
+    const [picks, setPicks] = useState<TableObject[]>([]);
     const [errorObjects, setErrorObjects] = useState<string[]>([]);
     const { CSVReader } = useCSVReader();
     const { refetch: prodBinRefetch } = useQuery(GET_PROD_BIN_IDS);
@@ -31,43 +33,65 @@ function PickHandler(props: PickHandlerProps) {
     const [add_pick] = useMutation(ADD_PICK_FOR_AN_EVAL);
 
     async function onSubmit() {
-        setObjects([]);
+        const numPicks = parsePickText();
+        let objects: TableObject[] = [];
+        setPicks([]);
         setErrorObjects([]);
-        if (uploadedData && evalTextArea) {
+        if (uploadedData && evalTextArea && numPicks) {
             for (let i = 0; i < uploadedData.length; i++) {
-                const asinValue = uploadedData[i];
-                let objectsInEval = await prodFromEvalRefetch({evalName: evalTextArea, asin: asinValue[0]});
+                const asinValue = uploadedData[i][0];
+                let objectsInEval = await prodFromEvalRefetch({evalName: evalTextArea, asin: asinValue});
                 // object not in eval check
                 if (objectsInEval.data.getAmazonProductFromEval.length > 0) {
-                    let value = await prodBinRefetch({asin: asinValue[0], binId: objectsInEval.data.getAmazonProductFromEval[0].bins[0].bin.BinId, evalName: evalTextArea});
-                    let id = -1;
-                    let picksAssociatedWithProdBinId: any;
-                    for (let i = 0; i < value.data.getProductBinFromAmazonProductBinEval.length; i++) {
-                        id = parseInt(value.data.getProductBinFromAmazonProductBinEval[0].id);
-                        picksAssociatedWithProdBinId = await picksFromProdBinRefetch({ProductBinId: id});
-                        if (picksAssociatedWithProdBinId.data.getPicksFromProductBin.length === 0) {
-                            break;
-                        } else {
-                            id = -1;
-                        }
-                    }
-                    // object not already picked check
-                    if (id > -1) {
-                        setObjects(current => [...current, {
-                            asin: asinValue[0],
-                            productName: objectsInEval.data.getAmazonProductFromEval[0].name,
-                            productBinId: id,
-                            binName: objectsInEval.data.getAmazonProductFromEval[0].bins[0].bin.BinName
-                        }]);
-                        add_pick({variables: {ProductBinId: id}})
-                    } else {
-                        setErrorObjects(current => [...current, asinValue[0]]);
-                    }
+                    let value = await prodBinRefetch({asin: asinValue, binId: objectsInEval.data.getAmazonProductFromEval[0].bins[0].bin.BinId, evalName: evalTextArea});
+                    objects.push({
+                        asin: asinValue,
+                        productName: objectsInEval.data.getAmazonProductFromEval[0].name,
+                        productBinId: value.data.getProductBinFromAmazonProductBinEval,
+                        binName: objectsInEval.data.getAmazonProductFromEval[0].bins[0].bin.BinName
+                    });
                 } else {
-                    setErrorObjects(current => [...current, asinValue[0]]);
+                    setErrorObjects(current => [...current, asinValue]);
+                }
+            }
+            for (let i = 0; i < numPicks && objects.length > 0; i++) {
+                let randIndex = Math.floor(Math.random() * (objects.length));
+                // select object
+                let currentObject = objects[randIndex];
+                objects.splice(randIndex, 1);
+                // go through prodBinIds
+                let id = -1;
+                let picksAssociatedWithProdBinId;
+                for (let j = 0; j < currentObject.productBinId.length; j++) {
+                    id = parseInt(currentObject.productBinId[j].id);
+                    picksAssociatedWithProdBinId = await picksFromProdBinRefetch({ProductBinId: id});
+                    if (picksAssociatedWithProdBinId.data.getPicksFromProductBin.length === 0) {
+                        break;
+                    } else {
+                        id = -1;
+                    }
+                }
+                
+                if (id > -1) {
+                    currentObject.productBinId = id;
+                    await add_pick({variables: {ProductBinId: id}});
+                    setPicks(current => [...current, currentObject]);
+                } else {
+                    setErrorObjects(current => [...current, currentObject.asin]);
+                    i--;
                 }
             }
         }
+    }
+
+    function parsePickText() {
+        let num = parseInt(pickTextArea as string);
+        if (isNaN(num) || num < 0 || num > 100) {
+            alert("Invalid entry please enter numbers between 0-100.");
+            return;
+        }
+
+        return num;
     }
 
     return (
@@ -102,6 +126,17 @@ function PickHandler(props: PickHandlerProps) {
                     )}
                 </CSVReader>
                 <br/>
+                <div id="heading-text">Number of Picks</div>
+                <textarea
+                    id="pick-text-area"
+                    onChange={(event) => setPickTextArea(event.target.value)}
+                    onKeyPress={e => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                        }
+                    }}
+                    value={pickTextArea}
+                /> <br/>
                 <div id="heading-text">Evalution Name</div>
                 <textarea
                     id="pick-text-area"
@@ -122,7 +157,7 @@ function PickHandler(props: PickHandlerProps) {
             <div id="left-content">
                 <div id="heading-text">Non-Error Object Info</div>
             </div>
-            <ObjectTable objectList={objects}/>
+            <ObjectTable objectList={picks}/>
 
             <div id="left-content">
                 <div id="heading-text">Error Object ASINs</div>
@@ -132,6 +167,8 @@ function PickHandler(props: PickHandlerProps) {
                     })
                 }
             </div>
+
+            {/* <StopWatch/> */}
         </>
     );
     
