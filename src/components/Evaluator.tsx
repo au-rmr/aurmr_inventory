@@ -35,17 +35,28 @@ const FILTER_BY_ATT_QUERY = gql`
     }
 `;
 
+// const SAVE_TABLE_MUTATION = gql`
+//     mutation addProdToBin($asin: String!, $binId: String!, $evalName: String!) {
+//         addProdToBin(asin: $asin, binId: $binId, evalName: $evalName) {
+//             bin {
+//                 BinId
+//             }
+//         }
+//     }
+// `;
+
 function Evaluator() {
     const [checkedBoxes, setCheckedBoxes] = useState<number[]>([]);
     const [contents, setContents] = useState<string[][]>([[]]);
     const [numberOfObjects, setNumberOfObjects] = useState<number>(0);
-    const shelfDimensions: number[] = [13, 4];
+    const [shelfDimensions, setShelfDimensions] = useState<number[]>([12, 4]);
 
     let attributeList: any[] = [];
     let filtList = new Set<string>();
     
     const {data: attData, loading: attLoading, error: attError} = useQuery(ATT_QUERY);
     const [getFiltProd, {data: filtData, loading: filtLoading, error: filtError}] = useLazyQuery(FILTER_BY_ATT_QUERY, {variables: {checkedBoxes}});
+
     
     useEffect(() => {
         getFiltProd({variables: {checkedBoxes}});
@@ -56,7 +67,18 @@ function Evaluator() {
         setContents(randomlyAssignObjects(shelfDimensions[0]*shelfDimensions[1], numberOfObjects, (Array.from(filtList)).map((x: any) => x.name)));
     }, [filtData, numberOfObjects]);
 
-    const callback = (numObjects: number, checked: number[]) => {
+    useEffect(() => {
+        fetchData();
+        setContents(randomlyAssignObjects(shelfDimensions[0]*shelfDimensions[1], numberOfObjects, (Array.from(filtList)).map((x: any) => x.name)));
+    }, [shelfDimensions]);
+
+    const callback = (numObjects: number, checked: number[], table: string) => {
+        if (table === "Table 1") {
+            setShelfDimensions([12, 4]);
+        }
+        else if (table === "Table 2") {
+            setShelfDimensions([8, 3]);
+        }
         setCheckedBoxes(checked);
         setNumberOfObjects(numObjects);
         fetchData();
@@ -85,9 +107,14 @@ function Evaluator() {
             }
         }
     }
+
+    function saveTableConfig() {
+        //TODO: implement save table
+        console.log(contents);
+    }
     
     function showTable() {
-        if (numberOfObjects != 0) return <Table contents={contents} shelfDimensions={shelfDimensions}/>
+        if (numberOfObjects != 0) return <Table onChange={saveTableConfig} contents={contents} shelfDimensions={shelfDimensions}/>
     }
     
     return (

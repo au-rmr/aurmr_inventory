@@ -217,3 +217,39 @@ query getBinBinid($binId: String!) {
   }
 }
 `
+
+export const GET_PROD_BIN_IDS = gql`
+    query getProdBinIds($asin: String!, $binId: String!, $evalName: String!) {
+        getProductBinFromAmazonProductBinEval(
+            asin: $asin,
+            binId: $binId,
+            evalName: $evalName
+        ){
+            id
+        }
+    }
+`
+
+export const GET_PICKS_FROM_PROD_BIN_IDS = gql`
+    query getPicks($ProductBinId: Int!) {
+        getPicksFromProductBin(
+            ProductBinId: $ProductBinId
+        ){
+            ProductBinId
+        }
+    }
+`
+
+export const GET_PROD_FROM_EVAL = gql`
+    query getProdFromEval($evalName: String!, $asin: String!) {
+        getAmazonProductFromEval(evalName: $evalName, asin: $asin) {
+            name
+            bins {
+                bin {
+                    BinId
+                    BinName
+                }
+            }
+        }
+    }
+`
