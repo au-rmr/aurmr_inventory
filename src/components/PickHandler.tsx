@@ -29,6 +29,16 @@ function PickHandler(props: PickHandlerProps) {
     const { refetch: prodFromEvalRefetch } = useQuery(GET_PROD_FROM_EVAL);
     const [add_pick] = useMutation(ADD_PICK_FOR_AN_EVAL);
 
+    function parsePickText() {
+        let num = parseInt(pickTextArea as string);
+        if (isNaN(num) || num < 0 || num > 100) {
+            alert("Invalid entry please enter numbers between 0-100.");
+            return;
+        }
+
+        return num;
+    }
+    
     async function onSubmit() {
         const numPicks = parsePickText();
         let objects: TableObject[] = [];
@@ -79,16 +89,6 @@ function PickHandler(props: PickHandlerProps) {
                 }
             }
         }
-    }
-
-    function parsePickText() {
-        let num = parseInt(pickTextArea as string);
-        if (isNaN(num) || num < 0 || num > 100) {
-            alert("Invalid entry please enter numbers between 0-100.");
-            return;
-        }
-
-        return num;
     }
 
     return (
