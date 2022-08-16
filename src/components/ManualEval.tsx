@@ -97,31 +97,37 @@ function ManualEval(props: any) {
 
     const ErrorAudio = new Audio(".../public/ErrorSound.mp3");
 
-    // const [ros, setRos] = useState<any>(new ROSLIB.Ros({
-    //     url: 'ws://control:9090'
-    // }));
-    // const [robotServiceClient, setRobotServiceClient] = useState<any>(new ROSLIB.Service({
-    //     ros: ros,
-    //     name: "/aurmr_demo/stow",
-    //     serviceType: "/aurmr_tasks/StowRequest"
-    // }));
-    let { isConnected } = useROS();
     var robotServiceClient: any;
-    useEffect(() => {
-        ErrorAudio.load();
+    const [isConnected, setIsConnected] = useState<boolean>(false);
+    function connectToRos() {
+        let ros: any;
+        ros = new ROSLIB.Ros({
+            url: 'ws://control:9090'
+        });
 
-        if (!isConnected) {
-            var ros = new ROSLIB.Ros({
-                url: 'ws://control:9090'
-            });
-    
-            robotServiceClient = new ROSLIB.Service({
-                ros: ros,
-                name: "/aurmr_demo/stow",
-                serviceType: "/aurmr_tasks/StowRequest"
-            });
-        }        
-    })
+        ros.on('connection', function () {
+            console.log('Connected to websocket server.');
+            setIsConnected(true);
+        });
+
+        ros.on('error', function (error: any) {
+            console.log('Error connecting to websocket server: ', error);
+            setIsConnected(false);
+        });
+
+        ros.on('close', function () {
+            console.log('Connection to websocket server closed.');
+            setIsConnected(false);
+        });
+
+        robotServiceClient = new ROSLIB.Service({
+            ros: ros,
+            name: "aurmr_demo/stow",
+            serviceType: "/aurmr_tasks/StowRequest"
+        });
+    }
+
+
 
     let binList: string[] = [];
     let binInfoList: any[] = [];
@@ -529,7 +535,10 @@ function ManualEval(props: any) {
         <div id="overall">
             <h1>Manual Evaluation</h1>
             <div id="topStuff">
+                <p style={{ "display": "inline", "marginLeft": "15px" }}>Step 1: </p><Button disabled={isConnected} style={{ "display": "inline" }} variant="contained" id="connectToBot" onClick={connectToRos}>Connect to Robot</Button>
                 <div style={{ "display": "block", "margin": "15px" }}>
+
+                    <p >Step 2: </p>
                     <FormControl id="evalName" error={evalNameError} variant="standard">
                         <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
                         <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
@@ -538,6 +547,7 @@ function ManualEval(props: any) {
                 </div>
 
                 <div style={{ "display": "block", "margin": "15px" }}>
+                    <p >Step 3: </p>
                     <FormControl error={tableError} disabled={tableDisabled}>
                         <FormLabel component="legend">Pick a Pod</FormLabel>
                         <RadioGroup value={tableName} row>
@@ -565,12 +575,13 @@ function ManualEval(props: any) {
                                 }
                                 label="Pod 4"
                             />
-                            <Button variant="outlined" color="success" onClick={tableNameOnClick}>Submit Table Choice</Button>
+                            <Button variant="outlined" color="success" onClick={tableNameOnClick}>Submit Pod Choice</Button>
                         </RadioGroup>
                     </FormControl>
                 </div>
 
                 <div style={{ "display": "block", "margin": "15px" }}>
+                    <p >Step 4: </p>
                     <FormControl id="evalName" error={evalNameError} variant="standard">
                         <FormLabel component="legend">Enter Maximum Bin GCU:</FormLabel>
                         <Input disabled={maxBinGCUDisabled} error={maxBinGCUError} onChange={(e) => setMaxBinGCU(e.target.value)} value={maxBinGCU} placeholder="Max Bin GCU" />
@@ -581,6 +592,7 @@ function ManualEval(props: any) {
                 {submitMessage != "" ? <p className="submitMessagebox">{submitMessage}</p> : <p></p>}
 
                 <div style={{ "display": "block", "margin": "15px" }}>
+                    <p >Step 5: </p>
                     <FormControl>
                         <FormLabel id="demo-radio-buttons-group-label">Method of Input</FormLabel>
                         <RadioGroup
@@ -636,7 +648,7 @@ function ManualEval(props: any) {
 
                 </div>
 
-                <Button variant="contained" id="submitEvalButton" >Submit Evaluation {submitableEvalName}</Button>
+                <p style={{ "color": "red" }}>Remember your evaluation name: {submitableEvalName}</p>
             </div>
             <FormGroup row style={{ "marginTop": "20px" }}>
                 <LoadingButton
