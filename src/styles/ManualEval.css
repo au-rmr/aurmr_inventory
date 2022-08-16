@@ -39,6 +39,13 @@
     border-radius: 5px;
 }
 
+.errorMsg {
+    padding: 5px;
+    background-color: red;
+    border-color: red;
+    border-radius: 5px;
+}
+
 .binLabel {
     border: solid;
     border-radius: 50%;

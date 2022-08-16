@@ -157,6 +157,44 @@ query getProdFromBinEval($binName: String!, $evalName: String!, $tableName:Strin
   }
 `
 
+export const GET_PROD_IN_BIN_ID_FOR_EVAL = gql`
+query getProdFromBinIDEval($binId: String!, $evalName: String!, $tableName:String!) {
+    getAmazonProductFromBinIdEval(evalName: $evalName, binId: $binId, tableName:$tableName) {
+           id
+      bin {
+        BinName
+        TableName
+        depth
+        width
+        height
+        dimensions_units
+      } 
+      evaluation {
+        name
+      }
+      amazonProduct {
+        id
+        asin
+        name
+        size_length
+        size_width
+        size_height
+        size_units
+        weight
+        weight_units
+        attributes {
+          AttributeId
+          AmazonProductId
+          attribute {
+            id
+            value
+          }
+        }
+      }
+    }
+  }
+`
+
 export const GET_BINS_BY_TABLE = gql`
     query getBinsByTable($tableName: String!) {
         getBinByTable(tableName:$tableName) {

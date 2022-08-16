@@ -156,6 +156,38 @@ module.exports = {
             return prods;
         },
 
+        getAmazonProductFromBinIdEval: async (_, args, context) => {
+            const prods = context.prisma.productBin.findMany({
+                where: {
+                    AND: [
+                        {
+                            bin: {
+                                BinId: {
+                                    equals: args.binId
+                                },
+                                TableName: {
+                                    equals: args.tableName
+                                }                                
+                            }
+                        },
+                        {
+                            evaluation: {
+                                name: {
+                                    equals: args.evalName
+                                }
+                            }
+                        }
+                    ]
+                },
+                include: {
+                    bin: true,
+                    evaluation: true,
+                    amazonProduct: true
+                }
+            })
+            return prods;
+        },
+
         getAmazonProductFromEval: (_, args, context) => {
             const prods = context.prisma.amazonProduct.findMany({
                 where: {
