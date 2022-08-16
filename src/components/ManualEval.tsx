@@ -10,6 +10,7 @@ import { GET_ALL_PROD } from '../GraphQLQueriesMuts/Query';
 import { ADD_PROD_TO_BIN_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { GET_ONE_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_PROD_IN_BIN_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
+import { GET_PROD_IN_BIN_ID_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_ONE_PROD } from '../GraphQLQueriesMuts/Query';
 import { GET_BIN_FROM_BINID } from '../GraphQLQueriesMuts/Query';
 import { convertCompilerOptionsFromJson, JsxEmit } from 'typescript';
@@ -77,6 +78,7 @@ function ManualEval(props: any) {
     const [isBinError, setisBinError] = useState<boolean>(false);
     const [submitableProd, setSubmitableProd] = useState<string>("");
     const [submitableBin, setSubmitableBin] = useState<string>("");
+    const [binErrorMsg, setBinErrorMsg] = useState<String>("");
     const [submitMessage, setSubmitMessage] = useState<string>("");
     const refASIN = useRef<HTMLInputElement>(null);
     const refBin = useRef<HTMLInputElement>(null);
@@ -138,6 +140,7 @@ function ManualEval(props: any) {
     const [add_prod_to_bin, { data: addProdToBinData, loading: addProdToBinLoading, error: addProdToBinError }] = useMutation(ADD_PROD_TO_BIN_FOR_AN_EVAL);
     const { data: evalData, loading: evalLoading, error: evalError, refetch: evalRefetch } = useQuery(GET_ONE_EVAL);
     const { data: eachBinData, loading: eachBinDataLoading, error: eachBinDataErrorLoading, refetch: prodInBinEvalRefetch } = useQuery(GET_PROD_IN_BIN_FOR_EVAL);
+    const { data: eachBinIdData, loading: eachBinIdDataLoading, error: eachBinIdDataErrorLoading, refetch: prodInBinIdEvalRefetch } = useQuery(GET_PROD_IN_BIN_ID_FOR_EVAL);
     const { data: oneProdData, loading: oneProdLoading, error: oneProdError, refetch: oneProdRefetch } = useQuery(GET_ONE_PROD);
     const { data: OneBinData, loading: OneBinLoading, error: OneBinError, refetch: OneBinRefetch } = useQuery(GET_BIN_FROM_BINID);
 
@@ -259,19 +262,21 @@ function ManualEval(props: any) {
         console.log(binListToCheck)
         if (binListToCheck.includes(e.target.value)) {
             console.log(tableName)
-            let oneBinSpecific = await OneBinRefetch({ binId: e.target.value })
+            let oneBinSpecific = await prodInBinIdEvalRefetch({ binId: e.target.value, tableName: tableName, evalName: submitableEvalName })
             console.log(oneBinSpecific);
-            let binDepth = oneBinSpecific.data.getBinByBinId.depth;
-            let binWidth = oneBinSpecific.data.getBinByBinId.width;
-            let binHeight = oneBinSpecific.data.getBinByBinId.height;
+            let oneBinDetails = await OneBinRefetch({ binId: e.target.value })
+            console.log(oneBinDetails);
+            let binDepth = oneBinDetails.data.getBinByBinId.depth;
+            let binWidth = oneBinDetails.data.getBinByBinId.width;
+            let binHeight = oneBinDetails.data.getBinByBinId.height;
             let volumeOfBin = binDepth * binHeight * binWidth;
             let volumeOfProds: number = 0;
             let lengthFromWidth: number = 0;
-            for (let a = 0; a < oneBinSpecific.data.getBinByBinId.AmazonProducts.length; a++) {
-                if (oneBinSpecific.data.getBinByBinId.AmazonProducts[a].amazonProduct.size_units != "Unavailable") {
-                    let prodCurrHeight = parseFloat(oneBinSpecific.data.getBinByBinId.AmazonProducts[a].amazonProduct.size_height);
-                    let prodCurrWidth = parseFloat(oneBinSpecific.data.getBinByBinId.AmazonProducts[a].amazonProduct.size_width);
-                    let prodCurrLength = parseFloat(oneBinSpecific.data.getBinByBinId.AmazonProducts[a].amazonProduct.size_length);
+            for (let a = 0; a < oneBinSpecific.data.getAmazonProductFromBinIdEval.length; a++) {
+                if (oneBinSpecific.data.getAmazonProductFromBinIdEval[a].amazonProduct.size_units != "Unavailable") {
+                    let prodCurrHeight = parseFloat(oneBinSpecific.data.getAmazonProductFromBinIdEval[a].amazonProduct.size_height);
+                    let prodCurrWidth = parseFloat(oneBinSpecific.data.getAmazonProductFromBinIdEval[a].amazonProduct.size_width);
+                    let prodCurrLength = parseFloat(oneBinSpecific.data.getAmazonProductFromBinIdEval[a].amazonProduct.size_length);
                     volumeOfProds += prodCurrHeight * prodCurrWidth * prodCurrLength;
 
                     let choosedOrient = objOrientationChosen(prodCurrLength, prodCurrWidth, prodCurrHeight, binHeight, binWidth, binDepth, lengthFromWidth);
@@ -282,6 +287,7 @@ function ManualEval(props: any) {
 
                 } else {
                     setisBinError(true);
+                    setBinErrorMsg("Error: Bin Size is unavailabe in the DB");
                     binErr = true;
                     console.log("Error: Bin Size is unavailabe in the DB")
                     return;
@@ -298,6 +304,7 @@ function ManualEval(props: any) {
                 setisBinError(true);
                 binErr = true;
                 console.log("Error: Volume will go above the available volume of the bin.")
+                setBinErrorMsg("Error: Volume will go above the available volume of the bin.")
                 return;
             } else {
                 let newGCU = (volumeOfProds + volumeOfNewProd) / volumeOfBin;
@@ -305,6 +312,7 @@ function ManualEval(props: any) {
                     setisBinError(true);
                     binErr = true;
                     console.log("Error: The New GCU will go above the specified max GCU.")
+                    setBinErrorMsg("Error: The New GCU will go above the specified max GCU.")
                     return;
                 } else {
                     // Figure out the W - l value for the bin from the items that are currently present in the bin. 
@@ -312,6 +320,7 @@ function ManualEval(props: any) {
                         setisBinError(true);
                         binErr = true;
                         console.log("Error: The orientation doesn't fit in the bin.")
+                        setBinErrorMsg("Error: The orientation doesn't fit in the bin.")
                         return;
                     } else {
                         setisBinError(false);
@@ -324,6 +333,7 @@ function ManualEval(props: any) {
             setisBinError(true);
             binErr = true;
             console.log("Error: This bin Id doesn't exist.")
+            setBinErrorMsg("Error: This bin Id doesn't exist.")
             ErrorAudio.play();
             return;
         }
@@ -486,6 +496,7 @@ function ManualEval(props: any) {
         setisBinError(false);
         setSubmitableProd("");
         setSubmitableBin("");
+        setBinErrorMsg("");
         setBinIdDisabled(true);
         refASIN.current!.focus();
     }
@@ -494,6 +505,7 @@ function ManualEval(props: any) {
         console.log("hello")
         setisAsinError(false);
         setisBinError(false);
+        setBinErrorMsg("")
         setSubmitableProd("");
         setSubmitableBin("");
         setEvalNameDisabled(false);
@@ -590,6 +602,8 @@ function ManualEval(props: any) {
                 </div>
 
                 {submitMessage != "" ? <p className="submitMessagebox">{submitMessage}</p> : <p></p>}
+
+                {binErrorMsg != "" ? <p className="errorMsg">{binErrorMsg}</p> : <p></p>}
 
                 <div style={{ "display": "block", "margin": "15px" }}>
                     <p >Step 5: </p>

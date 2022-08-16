@@ -13,6 +13,8 @@ type Query {
 
   getAmazonProductFromBinEval(evalName: String!, binName: String!, tableName: String!): [ProductBin]
 
+  getAmazonProductFromBinIdEval(evalName: String!, binId: String!, tableName: String!): [ProductBin]
+
   getAllBins: [Bin]
 
   getBinByTable(tableName: String!): [Bin]
