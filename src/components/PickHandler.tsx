@@ -38,7 +38,7 @@ function PickHandler(props: PickHandlerProps) {
 
         return num;
     }
-    
+
     async function onSubmit() {
         const numPicks = parsePickText();
         let objects: TableObject[] = [];
@@ -152,12 +152,12 @@ function PickHandler(props: PickHandlerProps) {
             </div>
             
             <div id="left-content">
-                <div id="heading-text">Non-Error Object Info</div>
+                <div id="heading-text">Pick Info</div>
             </div>
             <ObjectTable objectList={picks}/>
 
             <div id="left-content">
-                <div id="heading-text">Error Object ASINs</div>
+                <div id="heading-text">Error ASINs</div>
                 {
                     errorObjects && errorObjects.map((value, index) => {
                         return (<div key={index} id="text">{value}</div>)
