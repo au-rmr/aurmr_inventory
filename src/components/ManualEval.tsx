@@ -99,7 +99,7 @@ function ManualEval(props: any) {
 
     const ErrorAudio = new Audio(".../public/ErrorSound.mp3");
 
-    var robotServiceClient: any;
+    const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
     function connectToRos() {
         let ros: any;
@@ -122,11 +122,11 @@ function ManualEval(props: any) {
             setIsConnected(false);
         });
 
-        robotServiceClient = new ROSLIB.Service({
+        setRobotServiceClient(new ROSLIB.Service({
             ros: ros,
             name: "aurmr_demo/stow",
             serviceType: "/aurmr_tasks/StowRequest"
-        });
+        }));
     }
 
 
@@ -534,7 +534,7 @@ function ManualEval(props: any) {
             bin_id: binId,
             object_id: prodBinId
         });
-
+        console.log(robotServiceClient);
         robotServiceClient.callService(request, function (result: any) {
             console.log("Received back from the Robot: " +
                 robotServiceClient.name +

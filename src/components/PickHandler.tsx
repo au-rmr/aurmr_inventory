@@ -7,6 +7,9 @@ import { ADD_PICK_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { useCSVReader } from 'react-papaparse';
 import ObjectTable from './ObjectTable';
 
+import ROSLIB from "roslib";
+import { useROS } from "react-ros";
+
 interface PickHandlerProps {
 }
 
@@ -28,6 +31,36 @@ function PickHandler(props: PickHandlerProps) {
     const { refetch: picksFromProdBinRefetch } = useQuery(GET_PICKS_FROM_PROD_BIN_IDS);
     const { refetch: prodFromEvalRefetch } = useQuery(GET_PROD_FROM_EVAL);
     const [add_pick] = useMutation(ADD_PICK_FOR_AN_EVAL);
+
+    const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
+    const [isConnected, setIsConnected] = useState<boolean>(false);
+    function connectToRos() {
+        let ros: any;
+        ros = new ROSLIB.Ros({
+            url: 'ws://control:9090'
+        });
+
+        ros.on('connection', function () {
+            console.log('Connected to websocket server.');
+            setIsConnected(true);
+        });
+
+        ros.on('error', function (error: any) {
+            console.log('Error connecting to websocket server: ', error);
+            setIsConnected(false);
+        });
+
+        ros.on('close', function () {
+            console.log('Connection to websocket server closed.');
+            setIsConnected(false);
+        });
+
+        setRobotServiceClient(new ROSLIB.Service({
+            ros: ros,
+            name: "aurmr_demo/pick",
+            serviceType: "/aurmr_tasks/PickRequest"
+        }));
+    }
 
     function parsePickText() {
         let num = parseInt(pickTextArea as string);
@@ -82,6 +115,22 @@ function PickHandler(props: PickHandlerProps) {
                 if (id > -1) {
                     currentObject.productBinId = id;
                     await add_pick({variables: {ProductBinId: id}});
+                    // Record current time
+                    // We send the message to ros with info; wait for ros to return a boolean
+                    var request = new ROSLIB.ServiceRequest({
+                        bin_id: currentObject.binName,
+                        object_id: currentObject.productBinId
+                    });
+                    console.log(robotServiceClient);
+                    let resultFromRobot: any = robotServiceClient.callService(request, function (result: any) {
+                        console.log("Received back from the Robot: " +
+                            robotServiceClient.name +
+                            ': ' +
+                            result)
+                    });
+                    // After the return value, record current time
+                    // Subtract the times
+                    // Mutate the pick and add the outcome and time taken
                     setPicks(current => [...current, currentObject]);
                 } else {
                     setErrorObjects(current => [...current, currentObject.asin]);
@@ -89,6 +138,20 @@ function PickHandler(props: PickHandlerProps) {
                 }
             }
         }
+    }
+
+    function sendRequestToRobot(binId: string, prodBinId: string) {
+        var request = new ROSLIB.ServiceRequest({
+            bin_id: binId,
+            object_id: prodBinId
+        });
+        console.log(robotServiceClient);
+        robotServiceClient.callService(request, function (result: any) {
+            console.log("Received back from the Robot: " +
+                robotServiceClient.name +
+                ': ' +
+                result)
+        });
     }
 
     return (
