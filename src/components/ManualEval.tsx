@@ -55,7 +55,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-
+    const debug: boolean = true;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
@@ -96,6 +96,7 @@ function ManualEval(props: any) {
     const [maxBinGCU, setMaxBinGCU] = useState<string>("1");
     const [eachBinGCU, setEachBinGCU] = useState<any>([]);
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
+    const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
 
     const ErrorAudio = new Audio(".../public/ErrorSound.mp3");
 
@@ -324,6 +325,7 @@ function ManualEval(props: any) {
                         return;
                     } else {
                         setisBinError(false);
+                        setBinErrorMsg("");
                         binErr = false;
                         console.log("No errors.");
                     }
@@ -332,8 +334,8 @@ function ManualEval(props: any) {
         } else {
             setisBinError(true);
             binErr = true;
-            console.log("Error: This bin Id doesn't exist.")
-            setBinErrorMsg("Error: This bin Id doesn't exist.")
+            console.log("Error: This bin Id doesn't exist in the pod (or incorrect binId).")
+            setBinErrorMsg("Error: This bin Id doesn't exist in the pod (or incorrect binId).")
             ErrorAudio.play();
             return;
         }
@@ -354,6 +356,7 @@ function ManualEval(props: any) {
             setSubmitableBin("");
             setisAsinError(false);
             setisBinError(false);
+            setBinErrorMsg("");
             refASIN.current!.focus();
             console.log(await evalRefetch({ evalName: submitableEvalName }));
             generateTable();
@@ -370,6 +373,7 @@ function ManualEval(props: any) {
             setSubmitableBin("");
             setisAsinError(false);
             setisBinError(false);
+            setBinErrorMsg("");
             refASIN.current!.focus();
             generateTable();
             sendRequestToRobot(submitableBin, submitableProd);
@@ -529,141 +533,153 @@ function ManualEval(props: any) {
         return 'rgb(' + r + ',' + g + ',0)';
     }
 
-    function sendRequestToRobot(binId: string, prodBinId: string) {
+    async function sendRequestToRobot(binId: string, prodBinId: string) {
+        let binDetails = await OneBinRefetch({ binId: binId });
+        let binName: string = binDetails.data.getBinByBinId.BinId;
         var request = new ROSLIB.ServiceRequest({
-            bin_id: binId,
+            bin_id: binName,
             object_id: prodBinId
         });
         console.log(robotServiceClient);
-        robotServiceClient.callService(request, function (result: any) {
-            console.log("Received back from the Robot: " +
-                robotServiceClient.name +
-                ': ' +
-                result)
-        });
+        setIsRobotMoving(true);
+        if (!debug) {
+            robotServiceClient.callService(request, function (result: boolean) {
+                console.log("Received back from the Robot: " +
+                    robotServiceClient.name +
+                    ': ' +
+                    result);
+                setIsRobotMoving(false);
+            });
+        }        
     }
 
     return (
         <div id="overall">
             <h1>Manual Evaluation</h1>
-            <div id="topStuff">
-                <p style={{ "display": "inline", "marginLeft": "15px" }}>Step 1: </p><Button disabled={isConnected} style={{ "display": "inline" }} variant="contained" id="connectToBot" onClick={connectToRos}>Connect to Robot</Button>
-                <div style={{ "display": "block", "margin": "15px" }}>
+            {isRobotMoving ?
+                <div id="topStuff">
+                    <p>Robot is moving. Please wait...</p>
+                    {debug ? <Button onClick={() => setIsRobotMoving(false)}>Received Message</Button> : <br />}
+                </div> :
+                <div id="topStuff">
+                    <p style={{ "display": "inline", "marginLeft": "15px" }}>Step 1: </p><Button disabled={isConnected} style={{ "display": "inline" }} variant="contained" id="connectToBot" onClick={connectToRos}>Connect to Robot</Button>
+                    <div style={{ "display": "block", "margin": "15px" }}>
 
-                    <p >Step 2: </p>
-                    <FormControl id="evalName" error={evalNameError} variant="standard">
-                        <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
-                        <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
-                    </FormControl>
-                    <Button variant="outlined" color="success" id="itemBinButton" onClick={evalNameOnClick}>Submit Evaluation Name</Button>
-                </div>
+                        <p >Step 2: </p>
+                        <FormControl id="evalName" error={evalNameError} variant="standard">
+                            <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
+                            <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
+                        </FormControl>
+                        <Button variant="outlined" color="success" id="itemBinButton" onClick={evalNameOnClick}>Submit Evaluation Name</Button>
+                    </div>
 
-                <div style={{ "display": "block", "margin": "15px" }}>
-                    <p >Step 3: </p>
-                    <FormControl error={tableError} disabled={tableDisabled}>
-                        <FormLabel component="legend">Pick a Pod</FormLabel>
-                        <RadioGroup value={tableName} row>
-                            <FormControlLabel
-                                control={
-                                    <Radio onChange={(e) => setTableName("1")} value="1" name="1" />
-                                }
-                                label="Pod 1 (6-inch)"
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Radio onChange={(e) => setTableName("2")} value="2" name="2" />
-                                }
-                                label="Pod 2 (14-inch)"
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox disabled name="3" />
-                                }
-                                label="Pod 3"
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox disabled name="4" />
-                                }
-                                label="Pod 4"
-                            />
-                            <Button variant="outlined" color="success" onClick={tableNameOnClick}>Submit Pod Choice</Button>
-                        </RadioGroup>
-                    </FormControl>
-                </div>
+                    <div style={{ "display": "block", "margin": "15px" }}>
+                        <p >Step 3: </p>
+                        <FormControl error={tableError} disabled={tableDisabled}>
+                            <FormLabel component="legend">Pick a Pod</FormLabel>
+                            <RadioGroup value={tableName} row>
+                                <FormControlLabel
+                                    control={
+                                        <Radio onChange={(e) => setTableName("1")} value="1" name="1" />
+                                    }
+                                    label="Pod 1 (6-inch)"
+                                />
+                                <FormControlLabel
+                                    control={
+                                        <Radio onChange={(e) => setTableName("2")} value="2" name="2" />
+                                    }
+                                    label="Pod 2 (14-inch)"
+                                />
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox disabled name="3" />
+                                    }
+                                    label="Pod 3"
+                                />
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox disabled name="4" />
+                                    }
+                                    label="Pod 4"
+                                />
+                                <Button variant="outlined" color="success" onClick={tableNameOnClick}>Submit Pod Choice</Button>
+                            </RadioGroup>
+                        </FormControl>
+                    </div>
 
-                <div style={{ "display": "block", "margin": "15px" }}>
-                    <p >Step 4: </p>
-                    <FormControl id="evalName" error={evalNameError} variant="standard">
-                        <FormLabel component="legend">Enter Maximum Bin GCU:</FormLabel>
-                        <Input disabled={maxBinGCUDisabled} error={maxBinGCUError} onChange={(e) => setMaxBinGCU(e.target.value)} value={maxBinGCU} placeholder="Max Bin GCU" />
-                    </FormControl>
-                    <Button variant="outlined" color="success" onClick={maxBinGCUButton}>Submit Max Bin GCU</Button>
-                </div>
+                    <div style={{ "display": "block", "margin": "15px" }}>
+                        <p >Step 4: </p>
+                        <FormControl id="evalName" error={evalNameError} variant="standard">
+                            <FormLabel component="legend">Enter Maximum Bin GCU:</FormLabel>
+                            <Input disabled={maxBinGCUDisabled} error={maxBinGCUError} onChange={(e) => setMaxBinGCU(e.target.value)} value={maxBinGCU} placeholder="Max Bin GCU" />
+                        </FormControl>
+                        <Button variant="outlined" color="success" onClick={maxBinGCUButton}>Submit Max Bin GCU</Button>
+                    </div>
 
-                {submitMessage != "" ? <p className="submitMessagebox">{submitMessage}</p> : <p></p>}
+                    {submitMessage != "" ? <p className="submitMessagebox">{submitMessage}</p> : <p></p>}
 
-                {binErrorMsg != "" ? <p className="errorMsg">{binErrorMsg}</p> : <p></p>}
+                    {binErrorMsg != "" ? <p className="errorMsg">{binErrorMsg}</p> : <p></p>}
 
-                <div style={{ "display": "block", "margin": "15px" }}>
-                    <p >Step 5: </p>
-                    <FormControl>
-                        <FormLabel id="demo-radio-buttons-group-label">Method of Input</FormLabel>
-                        <RadioGroup
-                            row
-                            aria-labelledby="demo-radio-buttons-group-label"
-                            defaultValue="Automatic"
-                            value={autoOrManual}
-                            name="radio-buttons-group"
-                            onChange={(e) => setAutoOrManual(e.target.value)}
-                        >
-                            <FormControlLabel value="Automatic" control={<Radio />} label="Automatic" />
-                            <FormControlLabel value="Manual" control={<Radio />} label="Manual" />
-                        </RadioGroup>
-                    </FormControl>
+                    <div style={{ "display": "block", "margin": "15px" }}>
+                        <p >Step 5: </p>
+                        <FormControl>
+                            <FormLabel id="demo-radio-buttons-group-label">Method of Input</FormLabel>
+                            <RadioGroup
+                                row
+                                aria-labelledby="demo-radio-buttons-group-label"
+                                defaultValue="Automatic"
+                                value={autoOrManual}
+                                name="radio-buttons-group"
+                                onChange={(e) => setAutoOrManual(e.target.value)}
+                            >
+                                <FormControlLabel value="Automatic" control={<Radio />} label="Automatic" />
+                                <FormControlLabel value="Manual" control={<Radio />} label="Manual" />
+                            </RadioGroup>
+                        </FormControl>
 
-                    {autoOrManual == "Automatic" ?
-                        <div id="leftForm">
-                            <FormLabel component="legend">Enter Automatically:</FormLabel>
-                            <FormControl id="itemInput" error={isASINError} variant="standard">
-                                <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
-                            </FormControl>
+                        {autoOrManual == "Automatic" ?
+                            <div id="leftForm">
+                                <FormLabel component="legend">Enter Automatically:</FormLabel>
+                                <FormControl id="itemInput" error={isASINError} variant="standard">
+                                    <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
+                                    <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                                </FormControl>
 
-                            <FormControl id="binInput" error={isBinError} variant="standard">
-                                <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
-                                <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
-                            </FormControl>
-                            <div>
-                                <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
-                                <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                                <FormControl id="binInput" error={isBinError} variant="standard">
+                                    <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
+                                    <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
+                                </FormControl>
+                                <div>
+                                    <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
+                                    <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                                </div>
                             </div>
-                        </div>
-                        :
-                        <div id="rightForm">
-                            <FormLabel component="legend">Enter Manually:</FormLabel>
-                            <FormControl id="itemInput" error={isASINError} variant="standard">
-                                <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
-                            </FormControl>
+                            :
+                            <div id="rightForm">
+                                <FormLabel component="legend">Enter Manually:</FormLabel>
+                                <FormControl id="itemInput" error={isASINError} variant="standard">
+                                    <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
+                                    <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                                </FormControl>
 
-                            <FormControl id="binInput" error={isBinError} variant="standard">
-                                <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
-                                <Input disabled={binIdDisabled} inputRef={refBin} onChange={checkValidBin} value={submitableBin} error={isBinError} id="binid" placeholder="Bin Id" />
-                            </FormControl>
-                            <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
+                                <FormControl id="binInput" error={isBinError} variant="standard">
+                                    <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
+                                    <Input disabled={binIdDisabled} inputRef={refBin} onChange={checkValidBin} value={submitableBin} error={isBinError} id="binid" placeholder="Bin Id" />
+                                </FormControl>
+                                <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
 
-                            <div>
-                                <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
-                                <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                                <div>
+                                    <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
+                                    <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                                </div>
                             </div>
-                        </div>
-                    }
+                        }
 
+                    </div>
+
+                    <p style={{ "color": "red" }}>Remember your evaluation name: {submitableEvalName}</p>
                 </div>
-
-                <p style={{ "color": "red" }}>Remember your evaluation name: {submitableEvalName}</p>
-            </div>
+            }
             <FormGroup row style={{ "marginTop": "20px" }}>
                 <LoadingButton
                     loading={loading}
