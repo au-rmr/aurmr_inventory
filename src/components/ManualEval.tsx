@@ -241,6 +241,10 @@ function ManualEval(props: any) {
                 listOfOrientations[listOfOrientations.length] = row(prodMatrix, i).get([0, 1]);
                 // console.log(orientationLenChosen);
                 // return orientationLenChosen;
+            } else {
+                if (x + 0.2 >= 0 && y + 0.2 >= 0 && z + 0.2 >= 0) {
+                    listOfOrientations[listOfOrientations.length] = row(prodMatrix, i).get([0, 1]);
+                }
             }
         }
         if (listOfOrientations.length == 0) {
@@ -496,6 +500,7 @@ function ManualEval(props: any) {
     }
 
     function onClickUndo() {
+        setSubmitMessage("");
         setisAsinError(false);
         setisBinError(false);
         setSubmitableProd("");
@@ -506,7 +511,7 @@ function ManualEval(props: any) {
     }
 
     function onClickReset() {
-        console.log("hello")
+        setSubmitMessage("");
         setisAsinError(false);
         setisBinError(false);
         setBinErrorMsg("")
