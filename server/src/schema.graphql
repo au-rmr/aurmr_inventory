@@ -58,6 +58,8 @@ type Mutation {
   addProdToBin(asin: String!, binId: String!, evalName: String!): ProductBin!
 
   deleteProdFromBin(id: ID!): ProductBin
+
+  addOutcomeAndTimeToPick(Outcome: Boolean!, TimeTakenSec: Float!): Pick
 }
 
 type AmazonProduct {

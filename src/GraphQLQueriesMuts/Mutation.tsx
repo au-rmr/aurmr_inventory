@@ -27,3 +27,11 @@ export const ADD_PICK_FOR_AN_EVAL = gql`
         }
     }
 `
+
+export const ADD_OUTCOME_AND_TIME_FOR_A_PICK = gql`
+    mutation addOutcomeAndTimeToPick($Outcome: Boolean!, $TimeTakenSec: Float!) {
+        addOutcomeAndTimeToPick(Outcome: $Outcome, TimeTakenSec: $TimeTakenSec) {
+            ProductBinId
+        }
+    }
+`
