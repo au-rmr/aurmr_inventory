@@ -189,23 +189,18 @@ module.exports = {
         },
 
         getAmazonProductFromEval: (_, args, context) => {
-            const prods = context.prisma.amazonProduct.findMany({
+            const prods = context.prisma.productBin.findMany({
                 where: {
-                    asin: args.asin,
-                    bins: {
-                        every: {
-                            evaluation: {
-                                name: args.evalName
-                            }
-                        }
-                    },
-                },
-                include: {
-                    bins: {
-                        include: {
-                            bin: true
-                        }
+                    evaluation: {
+                        name: args.evalName
+                    }, 
+                    amazonProduct: {
+                        asin: args.asin
                     }
+                }, 
+                include: {
+                    amazonProduct: true, 
+                    bin: true
                 }
             })
             return prods;

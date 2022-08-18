@@ -27,7 +27,7 @@ type Query {
 
   getPicksFromProductBin(ProductBinId: Int!): [Pick]
 
-  getAmazonProductFromEval(evalName: String!, asin: String!): [AmazonProduct]
+  getAmazonProductFromEval(evalName: String!, asin: String!): [ProductBin]
 }
 
 type Mutation {
