@@ -55,7 +55,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = true;
+    const debug: boolean = false;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
@@ -187,11 +187,13 @@ function ManualEval(props: any) {
             if (getProdFromDB.data.getProduct[0].size_units != "Unavailable") {
                 console.log("true");
                 setisAsinError(false);
+                setBinErrorMsg("");
                 asinErr = false;
                 setBinIdDisabled(false);
                 refBin.current!.focus();
             } else {
                 console.log("Product doesn't have size information in the DB.");
+                setBinErrorMsg("Product doesn't have size information in the DB.");
                 setisAsinError(true);
                 setBinIdDisabled(true);
                 asinErr = true;
@@ -199,6 +201,7 @@ function ManualEval(props: any) {
             }
         } else {
             console.log("Product doesn't exist.");
+            setBinErrorMsg("Product doesn't exist.");
             setisAsinError(true);
             setBinIdDisabled(true);
             asinErr = true;
@@ -364,7 +367,7 @@ function ManualEval(props: any) {
             refASIN.current!.focus();
             console.log(await evalRefetch({ evalName: submitableEvalName }));
             generateTable();
-            sendRequestToRobot(submitableBin, submitableProd);
+            // sendRequestToRobot(submitableBin, submitableProd);
         }
     }
 
@@ -373,6 +376,7 @@ function ManualEval(props: any) {
             add_prod_to_bin({ variables: { asin: submitableProd, binId: submitableBin, evalName: submitableEvalName } })
             setSubmitMessage("Submit Successful: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName)
             console.log("submit: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName);
+            onClickTakePhoto();
             setSubmitableProd("");
             setSubmitableBin("");
             setisAsinError(false);
@@ -380,7 +384,7 @@ function ManualEval(props: any) {
             setBinErrorMsg("");
             refASIN.current!.focus();
             generateTable();
-            sendRequestToRobot(submitableBin, submitableProd);
+            // sendRequestToRobot(submitableBin, submitableProd);
         }
     }
 
@@ -540,7 +544,7 @@ function ManualEval(props: any) {
 
     async function sendRequestToRobot(binId: string, prodBinId: string) {
         let binDetails = await OneBinRefetch({ binId: binId });
-        let binName: string = binDetails.data.getBinByBinId.BinId;
+        let binName: string = binDetails.data.getBinByBinId.BinName;
         var request = new ROSLIB.ServiceRequest({
             bin_id: binName,
             object_id: prodBinId
@@ -556,6 +560,10 @@ function ManualEval(props: any) {
                 setIsRobotMoving(false);
             });
         }        
+    }
+
+    async function onClickTakePhoto() {
+        sendRequestToRobot(submitableBin, submitableProd)
     }
 
     return (
@@ -655,6 +663,7 @@ function ManualEval(props: any) {
                                     <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
                                 </FormControl>
                                 <div>
+                                <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Take Photo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
                                 </div>
@@ -674,6 +683,7 @@ function ManualEval(props: any) {
                                 <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
 
                                 <div>
+                                    <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Take Photo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
                                 </div>
