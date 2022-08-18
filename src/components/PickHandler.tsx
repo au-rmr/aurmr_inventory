@@ -26,7 +26,7 @@ interface TableObject {
 }
 
 function PickHandler(props: PickHandlerProps) {
-    const debug = true;
+    const debug = false;
 
     const [evalTextArea, setEvalTextArea] = useState<string>("");
     const [pickTextArea, setPickTextArea] = useState<string>("");
@@ -181,7 +181,7 @@ function PickHandler(props: PickHandlerProps) {
     async function sendRequestToRobot(binName: string, prodBinId: string) {
         var request = new ROSLIB.ServiceRequest({
             bin_id: binName,
-            object_id: prodBinId
+            object_id: "" + prodBinId + ""
         });
         console.log(robotServiceClient);
         setIsRobotMoving(true);

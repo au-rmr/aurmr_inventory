@@ -97,6 +97,8 @@ function ManualEval(props: any) {
     const [eachBinGCU, setEachBinGCU] = useState<any>([]);
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
+    const [submitableProdBinId, setSubmitableProdBinId] = useState<string>("");
+    let submitableProdBinId2 = "";
 
     const ErrorAudio = new Audio(".../public/ErrorSound.mp3");
 
@@ -371,9 +373,11 @@ function ManualEval(props: any) {
         }
     }
 
-    function submitOnClick() {
+    async function submitOnClick() {
         if (!isASINError && !isBinError && submitableProd != "" && submitableBin != "" && submitableEvalName != "") {
-            add_prod_to_bin({ variables: { asin: submitableProd, binId: submitableBin, evalName: submitableEvalName } })
+            let addedProd = await add_prod_to_bin({ variables: { asin: submitableProd, binId: submitableBin, evalName: submitableEvalName } })
+            console.log(addedProd.data.addProdToBin.id);
+            submitableProdBinId2 = "" + addedProd.data.addProdToBin.id + "";
             setSubmitMessage("Submit Successful: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName)
             console.log("submit: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName);
             onClickTakePhoto();
@@ -547,7 +551,7 @@ function ManualEval(props: any) {
         let binName: string = binDetails.data.getBinByBinId.BinName;
         var request = new ROSLIB.ServiceRequest({
             bin_id: binName,
-            object_id: prodBinId
+            object_id: "" + prodBinId + ""
         });
         console.log(robotServiceClient);
         setIsRobotMoving(true);
@@ -563,7 +567,7 @@ function ManualEval(props: any) {
     }
 
     async function onClickTakePhoto() {
-        sendRequestToRobot(submitableBin, submitableProd)
+        sendRequestToRobot(submitableBin, submitableProdBinId2)
     }
 
     return (
