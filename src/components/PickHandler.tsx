@@ -116,8 +116,9 @@ function PickHandler(props: PickHandlerProps) {
                                 "binName": objectsInEval.data.getAmazonProductFromEval[0].bin.BinName
                             });
                             let addedPick = await add_pick({ variables: { ProductBinId: parseInt(valueArr[k].id) } });
-                            pickId = addedPick.data.editPickOutTime.id;
-                            console.log("done")
+                            console.log(addedPick);
+                            pickId = addedPick.data.addPickWithOnlyProdBin.id;
+                            console.log(pickId)
                             let tablecell: JSX.Element =
                                 <TableRow>
                                     <TableCell>{objects[objects.length - 1]["productName"]}</TableCell>
@@ -127,7 +128,40 @@ function PickHandler(props: PickHandlerProps) {
                                 </TableRow>
                             console.log(objects)
                             setTableToDisplay(current => [...current, tablecell])
-                            sendRequestToRobot(objects[objects.length - 1]["binName"], objects[objects.length - 1]["productBinId"])
+                            // sendRequestToRobot(objects[objects.length - 1]["binName"], objects[objects.length - 1]["productBinId"])
+                            var request = new ROSLIB.ServiceRequest({
+                                bin_id: objects[objects.length - 1]["binName"],
+                                object_id: "" + objects[objects.length - 1]["productBinId"] + ""
+                            });
+                            console.log(robotServiceClient);
+                            setIsRobotMoving(true);
+                            if (!debug) {
+                                let startTime = Date.now();
+                                let sendService = await robotServiceClient.callService(request, function (result: any) {
+                                    console.log("Received back from the Robot: " +
+                                        robotServiceClient.name +
+                                        ': ' +
+                                        result.success)
+                                    setIsRobotMoving(false);
+                                    let endTime = Date.now();
+                                    console.log(endTime - startTime);
+                                    edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
+                                });
+                                await sendService.then((res: any) => {
+                                    console.log(res);
+                                })
+
+                                // await robotServiceClient.callService(request, function (result: any) {
+                                //     console.log("Received back from the Robot: " +
+                                //         robotServiceClient.name +
+                                //         ': ' +
+                                //         result)
+                                //     setIsRobotMoving(false);
+                                //     let endTime = Date.now();
+                                //     console.log(endTime - startTime);
+                                //     edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
+                                // });
+                            }
                             break;
                         }
                     }
@@ -140,25 +174,7 @@ function PickHandler(props: PickHandlerProps) {
     }
 
     async function sendRequestToRobot(binName: string, prodBinId: string) {
-        var request = new ROSLIB.ServiceRequest({
-            bin_id: binName,
-            object_id: "" + prodBinId + ""
-        });
-        console.log(robotServiceClient);
-        setIsRobotMoving(true);
-        if (!debug) {
-            let startTime = Date.now();
-            await robotServiceClient.callService(request, function (result: any) {
-                console.log("Received back from the Robot: " +
-                    robotServiceClient.name +
-                    ': ' +
-                    result)
-                setIsRobotMoving(false);
-                let endTime = Date.now();
-                console.log(endTime - startTime);
-                edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
-            });
-        }
+        
 
     }
 

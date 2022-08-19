@@ -312,6 +312,22 @@ module.exports = {
                 }
             })
             return bin;
+        }, 
+
+        getProdBinsFromEvalName: (_, args, context) => {
+            const prodbins = context.prisma.productBin.findMany({
+                where: {
+                    evaluation: {
+                        name: {
+                            equals: args.evalName
+                        }
+                    }
+                }, 
+                include: {
+                    bin: true
+                }
+            })
+            return prodbins;
         }
     },
 
