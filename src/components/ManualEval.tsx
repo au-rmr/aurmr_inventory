@@ -13,6 +13,7 @@ import { GET_PROD_IN_BIN_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_PROD_IN_BIN_ID_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_ONE_PROD } from '../GraphQLQueriesMuts/Query';
 import { GET_BIN_FROM_BINID } from '../GraphQLQueriesMuts/Query';
+import { GET_PRODBINID_FROM_EVALNAME } from '../GraphQLQueriesMuts/Query';
 import { convertCompilerOptionsFromJson, JsxEmit } from 'typescript';
 
 import FormLabel from '@mui/material/FormLabel';
@@ -55,7 +56,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = true;
+    const debug: boolean = false;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
@@ -98,8 +99,6 @@ function ManualEval(props: any) {
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
     const [submitableProdBinId, setSubmitableProdBinId] = useState<string>("");
-    const [previousSubmitableBin, setPreviousSubmitableBin] = useState<string>("");
-    const [previousSubmitableProdBinId, setPreviousSubmitableProdBinId] = useState<string>("");
 
     let submitableProdBinId2 = "";
 
@@ -149,6 +148,7 @@ function ManualEval(props: any) {
     const { data: eachBinIdData, loading: eachBinIdDataLoading, error: eachBinIdDataErrorLoading, refetch: prodInBinIdEvalRefetch } = useQuery(GET_PROD_IN_BIN_ID_FOR_EVAL);
     const { data: oneProdData, loading: oneProdLoading, error: oneProdError, refetch: oneProdRefetch } = useQuery(GET_ONE_PROD);
     const { data: OneBinData, loading: OneBinLoading, error: OneBinError, refetch: OneBinRefetch } = useQuery(GET_BIN_FROM_BINID);
+    const { data: OneProdBinData, loading: OneProdBinLoading, error: OneProdBinError, refetch: OneProdBinRefetch } = useQuery(GET_PRODBINID_FROM_EVALNAME)
 
     if ((BinLoading) || (prodLoading) || (evalLoading) || (eachBinDataLoading)) return <p>Loading...</p>;
     if (addProdToBinLoading) return <p>Submitting...</p>
@@ -195,10 +195,12 @@ function ManualEval(props: any) {
                 setBinErrorMsg("");
                 asinErr = false;
                 setBinIdDisabled(false);
-                refBin.current!.focus();
-                if (previousSubmitableBin != "" && previousSubmitableProdBinId != "") {
+                let previousProdBin = await OneProdBinRefetch({evalName: submitableEvalName});
+                console.log(previousProdBin);
+                if (previousProdBin.data.getProdBinsFromEvalName.length != 0) {
+                    console.log("entered")
                     onClickTakePhoto();
-                }
+                }                    
             } else {
                 console.log("Product doesn't have size information in the DB.");
                 setBinErrorMsg("Product doesn't have size information in the DB.");
@@ -375,8 +377,6 @@ function ManualEval(props: any) {
             refASIN.current!.focus();
             console.log(await evalRefetch({ evalName: submitableEvalName }));
             generateTable();
-            setPreviousSubmitableBin(sBin);
-            setPreviousSubmitableProdBinId(submitableProdBinId2);
             // sendRequestToRobot(submitableBin, submitableProd);
         }
     }
@@ -396,8 +396,6 @@ function ManualEval(props: any) {
             setBinErrorMsg("");
             refASIN.current!.focus();
             generateTable();
-            setPreviousSubmitableBin(submitableBin);
-            setPreviousSubmitableProdBinId(submitableProdBinId2);
             // sendRequestToRobot(submitableBin, submitableProd);
         }
     }
@@ -556,9 +554,9 @@ function ManualEval(props: any) {
         return 'rgb(' + r + ',' + g + ',0)';
     }
 
-    async function sendRequestToRobot(binId: string, prodBinId: string) {
-        let binDetails = await OneBinRefetch({ binId: binId });
-        let binName: string = binDetails.data.getBinByBinId.BinName;
+    async function sendRequestToRobot(binName: string, prodBinId: string) {
+        // let binDetails = await OneBinRefetch({ binId: binId });
+        // let binName: string = binDetails.data.getBinByBinId.BinName;
         var request = new ROSLIB.ServiceRequest({
             bin_id: binName,
             object_id: "" + prodBinId + ""
@@ -575,10 +573,14 @@ function ManualEval(props: any) {
                 setIsRobotMoving(false);
             });
         }
+        refBin.current!.focus();
     }
 
     async function onClickTakePhoto() {
-        sendRequestToRobot(previousSubmitableBin, previousSubmitableProdBinId)
+        let previousObjectQuery = await OneProdBinRefetch({evalName: submitableEvalName});
+        console.log(previousObjectQuery);
+        let prevObj = previousObjectQuery.data.getProdBinsFromEvalName;
+        sendRequestToRobot(prevObj[prevObj.length - 1].bin.BinName, prevObj[prevObj.length - 1].id);
     }
 
     return (

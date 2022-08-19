@@ -28,6 +28,8 @@ type Query {
   getPicksFromProductBin(ProductBinId: Int!): [Pick]
 
   getAmazonProductFromEval(evalName: String!, asin: String!): [ProductBin]
+
+  getProdBinsFromEvalName(evalName: String!): [ProductBin]
 }
 
 type Mutation {
