@@ -55,7 +55,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = true;
+    const debug: boolean = false;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
@@ -97,6 +97,8 @@ function ManualEval(props: any) {
     const [eachBinGCU, setEachBinGCU] = useState<any>([]);
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
+    const [submitableProdBinId, setSubmitableProdBinId] = useState<string>("");
+    let submitableProdBinId2 = "";
 
     const ErrorAudio = new Audio(".../public/ErrorSound.mp3");
 
@@ -187,11 +189,13 @@ function ManualEval(props: any) {
             if (getProdFromDB.data.getProduct[0].size_units != "Unavailable") {
                 console.log("true");
                 setisAsinError(false);
+                setBinErrorMsg("");
                 asinErr = false;
                 setBinIdDisabled(false);
                 refBin.current!.focus();
             } else {
                 console.log("Product doesn't have size information in the DB.");
+                setBinErrorMsg("Product doesn't have size information in the DB.");
                 setisAsinError(true);
                 setBinIdDisabled(true);
                 asinErr = true;
@@ -199,6 +203,7 @@ function ManualEval(props: any) {
             }
         } else {
             console.log("Product doesn't exist.");
+            setBinErrorMsg("Product doesn't exist.");
             setisAsinError(true);
             setBinIdDisabled(true);
             asinErr = true;
@@ -364,15 +369,18 @@ function ManualEval(props: any) {
             refASIN.current!.focus();
             console.log(await evalRefetch({ evalName: submitableEvalName }));
             generateTable();
-            sendRequestToRobot(submitableBin, submitableProd);
+            // sendRequestToRobot(submitableBin, submitableProd);
         }
     }
 
-    function submitOnClick() {
+    async function submitOnClick() {
         if (!isASINError && !isBinError && submitableProd != "" && submitableBin != "" && submitableEvalName != "") {
-            add_prod_to_bin({ variables: { asin: submitableProd, binId: submitableBin, evalName: submitableEvalName } })
+            let addedProd = await add_prod_to_bin({ variables: { asin: submitableProd, binId: submitableBin, evalName: submitableEvalName } })
+            console.log(addedProd.data.addProdToBin.id);
+            submitableProdBinId2 = "" + addedProd.data.addProdToBin.id + "";
             setSubmitMessage("Submit Successful: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName)
             console.log("submit: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName);
+            onClickTakePhoto();
             setSubmitableProd("");
             setSubmitableBin("");
             setisAsinError(false);
@@ -380,7 +388,7 @@ function ManualEval(props: any) {
             setBinErrorMsg("");
             refASIN.current!.focus();
             generateTable();
-            sendRequestToRobot(submitableBin, submitableProd);
+            // sendRequestToRobot(submitableBin, submitableProd);
         }
     }
 
@@ -540,10 +548,10 @@ function ManualEval(props: any) {
 
     async function sendRequestToRobot(binId: string, prodBinId: string) {
         let binDetails = await OneBinRefetch({ binId: binId });
-        let binName: string = binDetails.data.getBinByBinId.BinId;
+        let binName: string = binDetails.data.getBinByBinId.BinName;
         var request = new ROSLIB.ServiceRequest({
             bin_id: binName,
-            object_id: prodBinId
+            object_id: "" + prodBinId + ""
         });
         console.log(robotServiceClient);
         setIsRobotMoving(true);
@@ -556,6 +564,10 @@ function ManualEval(props: any) {
                 setIsRobotMoving(false);
             });
         }        
+    }
+
+    async function onClickTakePhoto() {
+        sendRequestToRobot(submitableBin, submitableProdBinId2)
     }
 
     return (
@@ -655,6 +667,7 @@ function ManualEval(props: any) {
                                     <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
                                 </FormControl>
                                 <div>
+                                <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Take Photo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
                                 </div>
@@ -674,6 +687,7 @@ function ManualEval(props: any) {
                                 <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
 
                                 <div>
+                                    <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Take Photo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
                                 </div>
