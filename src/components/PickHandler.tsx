@@ -137,7 +137,7 @@ function PickHandler(props: PickHandlerProps) {
                             setIsRobotMoving(true);
                             if (!debug) {
                                 let startTime = Date.now();
-                                let sendService = await robotServiceClient.callService(request, function (result: any) {
+                                await robotServiceClient.callService(request, function (result: any) {
                                     console.log("Received back from the Robot: " +
                                         robotServiceClient.name +
                                         ': ' +
@@ -146,10 +146,10 @@ function PickHandler(props: PickHandlerProps) {
                                     let endTime = Date.now();
                                     console.log(endTime - startTime);
                                     edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
+                                }).then((res:any) => {
+                                    console.log(res)
                                 });
-                                await sendService.then((res: any) => {
-                                    console.log(res);
-                                })
+                                console.log("hello")
 
                                 // await robotServiceClient.callService(request, function (result: any) {
                                 //     console.log("Received back from the Robot: " +
