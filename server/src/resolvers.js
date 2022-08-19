@@ -577,6 +577,19 @@ module.exports = {
                 }
             })
             return prodFromBin
+        }, 
+
+        editPickOutcomeTime: async (_, args, context, info) => {
+            const pick = context.prisma.pick.update({
+                where: {
+                    id: parseInt(args.id)
+                }, 
+                data: {
+                    Outcome: args.outcome, 
+                    TimeTakenSec: args.time
+                }
+            })
+            return pick;
         }
 
 

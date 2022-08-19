@@ -55,7 +55,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = false;
+    const debug: boolean = true;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
@@ -98,6 +98,9 @@ function ManualEval(props: any) {
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
     const [submitableProdBinId, setSubmitableProdBinId] = useState<string>("");
+    const [previousSubmitableBin, setPreviousSubmitableBin] = useState<string>("");
+    const [previousSubmitableProdBinId, setPreviousSubmitableProdBinId] = useState<string>("");
+
     let submitableProdBinId2 = "";
 
     const ErrorAudio = new Audio(".../public/ErrorSound.mp3");
@@ -193,6 +196,9 @@ function ManualEval(props: any) {
                 asinErr = false;
                 setBinIdDisabled(false);
                 refBin.current!.focus();
+                if (previousSubmitableBin != "" && previousSubmitableProdBinId != "") {
+                    onClickTakePhoto();
+                }
             } else {
                 console.log("Product doesn't have size information in the DB.");
                 setBinErrorMsg("Product doesn't have size information in the DB.");
@@ -369,6 +375,8 @@ function ManualEval(props: any) {
             refASIN.current!.focus();
             console.log(await evalRefetch({ evalName: submitableEvalName }));
             generateTable();
+            setPreviousSubmitableBin(sBin);
+            setPreviousSubmitableProdBinId(submitableProdBinId2);
             // sendRequestToRobot(submitableBin, submitableProd);
         }
     }
@@ -380,7 +388,7 @@ function ManualEval(props: any) {
             submitableProdBinId2 = "" + addedProd.data.addProdToBin.id + "";
             setSubmitMessage("Submit Successful: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName)
             console.log("submit: " + submitableProd + " inside " + submitableBin + " for " + submitableEvalName);
-            onClickTakePhoto();
+            // onClickTakePhoto();
             setSubmitableProd("");
             setSubmitableBin("");
             setisAsinError(false);
@@ -388,6 +396,8 @@ function ManualEval(props: any) {
             setBinErrorMsg("");
             refASIN.current!.focus();
             generateTable();
+            setPreviousSubmitableBin(submitableBin);
+            setPreviousSubmitableProdBinId(submitableProdBinId2);
             // sendRequestToRobot(submitableBin, submitableProd);
         }
     }
@@ -554,6 +564,7 @@ function ManualEval(props: any) {
             object_id: "" + prodBinId + ""
         });
         console.log(robotServiceClient);
+        console.log(request);
         setIsRobotMoving(true);
         if (!debug) {
             robotServiceClient.callService(request, function (result: boolean) {
@@ -563,11 +574,11 @@ function ManualEval(props: any) {
                     result);
                 setIsRobotMoving(false);
             });
-        }        
+        }
     }
 
     async function onClickTakePhoto() {
-        sendRequestToRobot(submitableBin, submitableProdBinId2)
+        sendRequestToRobot(previousSubmitableBin, previousSubmitableProdBinId)
     }
 
     return (
@@ -667,9 +678,10 @@ function ManualEval(props: any) {
                                     <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
                                 </FormControl>
                                 <div>
-                                <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Take Photo</Button>
+                                    
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                                    <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>
                                 </div>
                             </div>
                             :
@@ -687,9 +699,10 @@ function ManualEval(props: any) {
                                 <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
 
                                 <div>
-                                    <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Take Photo</Button>
+                                    
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                                    <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>
                                 </div>
                             </div>
                         }
