@@ -28,3 +28,12 @@ export const ADD_PICK_FOR_AN_EVAL = gql`
         }
     }
 `
+
+export const EDIT_PICK_OUTCOME_TIME = gql `
+mutation editPickOutTime($id: ID!, $outcome: Boolean!, $time: Float!) {
+	editPickOutcomeTime(id:$id, outcome:$outcome, time:$time) {
+    Outcome
+    TimeTakenSec
+  }
+}
+`

@@ -48,9 +48,9 @@ function App() {
           <NavLink to="/manualevaluation">
             <li>Manual Evaluation</li>
           </NavLink>
-          <NavLink to="/manualevaluation2">
+          {/* <NavLink to="/manualevaluation2">
             <li>Manual Evaluation 2.0</li>
-            </NavLink>
+            </NavLink> */}
           <NavLink to="/pickhandler">
             <li>Pick Handler</li>
           </NavLink>

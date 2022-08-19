@@ -5,6 +5,7 @@ import { Button } from '@mui/material';
 import { GET_PROD_BIN_IDS, GET_PICKS_FROM_PROD_BIN_IDS, GET_PROD_FROM_EVAL } from '../GraphQLQueriesMuts/Query';
 import { ADD_PICK_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { GET_BIN_FROM_BINID } from '../GraphQLQueriesMuts/Query';
+import { EDIT_PICK_OUTCOME_TIME } from '../GraphQLQueriesMuts/Mutation';
 import { useCSVReader } from 'react-papaparse';
 import ObjectTable from './ObjectTable';
 
@@ -36,6 +37,7 @@ function PickHandler(props: PickHandlerProps) {
     const [tableToDisplay, setTableToDisplay] = useState<JSX.Element[]>([]);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
 
+    let pickId = "";
 
     const { CSVReader } = useCSVReader();
 
@@ -45,6 +47,7 @@ function PickHandler(props: PickHandlerProps) {
     const { refetch: prodFromEvalRefetch } = useQuery(GET_PROD_FROM_EVAL);
     const { data: OneBinData, loading: OneBinLoading, error: OneBinError, refetch: OneBinRefetch } = useQuery(GET_BIN_FROM_BINID);
     const [add_pick] = useMutation(ADD_PICK_FOR_AN_EVAL);
+    const [edit_pick] = useMutation(EDIT_PICK_OUTCOME_TIME);
 
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -112,7 +115,8 @@ function PickHandler(props: PickHandlerProps) {
                                 "productBinId": valueArr[k].id,
                                 "binName": objectsInEval.data.getAmazonProductFromEval[0].bin.BinName
                             });
-                            console.log(await add_pick({ variables: { ProductBinId: parseInt(valueArr[k].id) } }));
+                            let addedPick = await add_pick({ variables: { ProductBinId: parseInt(valueArr[k].id) } });
+                            pickId = addedPick.data.editPickOutTime.id;
                             console.log("done")
                             let tablecell: JSX.Element =
                                 <TableRow>
@@ -132,49 +136,6 @@ function PickHandler(props: PickHandlerProps) {
                     setErrorObjects(current => [...current, asinValue]);
                 }
             }
-            // for (let i = 0; i < numPicks && objects.length > 0; i++) {
-            //     let randIndex = Math.floor(Math.random() * (objects.length));
-            //     // select object
-            //     let currentObject = objects[randIndex];
-            //     objects.splice(randIndex, 1);
-            //     // go through prodBinIds
-            //     let id = -1;
-            //     let picksAssociatedWithProdBinId;
-            //     for (let j = 0; j < currentObject.productBinId.length; j++) {
-            //         id = parseInt(currentObject.productBinId[j].id);
-            //         picksAssociatedWithProdBinId = await picksFromProdBinRefetch({ProductBinId: id});
-            //         if (picksAssociatedWithProdBinId.data.getPicksFromProductBin.length === 0) {
-            //             break;
-            //         } else {
-            //             id = -1;
-            //         }
-            //     }
-
-            //     if (id > -1) {
-            //         currentObject.productBinId = id;
-            //         await add_pick({variables: {ProductBinId: id}});
-            //         // Record current time
-            //         // We send the message to ros with info; wait for ros to return a boolean
-            //         var request = new ROSLIB.ServiceRequest({
-            //             bin_id: currentObject.binName,
-            //             object_id: currentObject.productBinId
-            //         });
-            //         console.log(robotServiceClient);
-            //         let resultFromRobot: any = robotServiceClient.callService(request, function (result: any) {
-            //             console.log("Received back from the Robot: " +
-            //                 robotServiceClient.name +
-            //                 ': ' +
-            //                 result)
-            //         });
-            //         // After the return value, record current time
-            //         // Subtract the times
-            //         // Mutate the pick and add the outcome and time taken
-            //         setPicks(current => [...current, currentObject]);
-            //     } else {
-            //         setErrorObjects(current => [...current, currentObject.asin]);
-            //         i--;
-            //     }
-            // }
         }
     }
 
@@ -186,12 +147,16 @@ function PickHandler(props: PickHandlerProps) {
         console.log(robotServiceClient);
         setIsRobotMoving(true);
         if (!debug) {
-            robotServiceClient.callService(request, function (result: any) {
+            let startTime = Date.now();
+            await robotServiceClient.callService(request, function (result: any) {
                 console.log("Received back from the Robot: " +
                     robotServiceClient.name +
                     ': ' +
                     result)
                 setIsRobotMoving(false);
+                let endTime = Date.now();
+                console.log(endTime - startTime);
+                edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
             });
         }
 
@@ -201,7 +166,7 @@ function PickHandler(props: PickHandlerProps) {
         <>
             <div id="left-content">
                 <Button onClick={connectToRos}>Connect to Robot</Button>
-                
+
                 {isRobotMoving
                     ? <div> <p>Robot is moving</p>  {debug
                         ? <Button onClick={() => setIsRobotMoving(false)}>Done Moving</Button>
