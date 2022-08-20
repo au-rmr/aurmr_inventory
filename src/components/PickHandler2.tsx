@@ -108,7 +108,7 @@ function PickHandler(props: PickHandlerProps) {
                     for (let k = 0; k < valueArr.length; k++) {
                         let prodBinIds = await picksFromProdBinRefetch({ ProductBinId: parseInt(valueArr[k].id) });
                         console.log(prodBinIds);
-                        if (prodBinIds.data.getPicksFromProductBin.length == 0) {
+                        // if (prodBinIds.data.getPicksFromProductBin.length == 0) {
                             objects.push({
                                 "asin": asinValue,
                                 "productName": objectsInEval.data.getAmazonProductFromEval[0].amazonProduct.name,
@@ -118,26 +118,36 @@ function PickHandler(props: PickHandlerProps) {
                             let addedPick = await add_pick({ variables: { ProductBinId: parseInt(valueArr[k].id) } });
                             console.log(addedPick);
                             pickId = addedPick.data.addPickWithOnlyProdBin.id;
-                            console.log(pickId)
+                            let outcome = addedPick.data.addPickWithOnlyProdBin.Outcome;
+                            console.log(outcome)
                             let tablecell: JSX.Element =
                                 <TableRow>
                                     <TableCell>{objects[objects.length - 1]["productName"]}</TableCell>
                                     <TableCell>{objects[objects.length - 1]["asin"]}</TableCell>
                                     <TableCell>{objects[objects.length - 1]["binName"]}</TableCell>
                                     <TableCell>{objects[objects.length - 1]["productBinId"]}</TableCell>
-                                    <TableCell><Button onClick={() => sendRequestToRobot(objects[objects.length - 1]["binName"], objects[objects.length - 1]["productBinId"])}>Pick</Button></TableCell>
+                                    <TableCell>
+                                        {outcome == null
+                                        ? <Button disabled={false} onClick={() => sendRequestToRobot(objects[objects.length - 1]["binName"], objects[objects.length - 1]["productBinId"])}>Pick</Button> 
+                                        : <Button disabled={true} >Pick</Button>
+                                        }
+                                    </TableCell>
                                 </TableRow>
                             console.log(objects)
                             setTableToDisplay(current => [...current, tablecell])
                             
                             break;
-                        }
+                        // }
                     }
                 } else {
                     setErrorObjects(current => [...current, asinValue]);
                 }
             }
         }
+    }
+
+    async function generatePickTable() {
+
     }
 
     async function sendRequestToRobot(binName: string, prodBinId: string) {

@@ -15,6 +15,7 @@ import TableCell from '@mui/material/TableCell';
 
 import ROSLIB from "roslib";
 import { useROS } from "react-ros";
+import { BorderInnerSharp } from '@mui/icons-material';
 
 interface PickHandlerProps {
 }
@@ -74,8 +75,8 @@ function PickHandler(props: PickHandlerProps) {
 
         setRobotServiceClient(new ROSLIB.Service({
             ros: ros,
-            name: "aurmr_demo/pick",
-            serviceType: "/aurmr_tasks/PickRequest"
+            name: "aurmr_demo/multiple_pick",
+            serviceType: "/aurmr_tasks/MultiplePickRequest"
         }));
     }
 
@@ -95,6 +96,9 @@ function PickHandler(props: PickHandlerProps) {
         setPicks([]);
         setErrorObjects([]);
         if (uploadedData && evalTextArea && numPicks) {
+            let bin_ids: string[] = [];
+            let object_ids: string[] = [];
+
             for (let i = 0; i < uploadedData.length; i++) {
                 const asinValue = uploadedData[i][0];
                 console.log(asinValue)
@@ -128,60 +132,80 @@ function PickHandler(props: PickHandlerProps) {
                                 </TableRow>
                             console.log(objects)
                             setTableToDisplay(current => [...current, tablecell])
-                            // sendRequestToRobot(objects[objects.length - 1]["binName"], objects[objects.length - 1]["productBinId"])
-                            var request = new ROSLIB.ServiceRequest({
-                                bin_id: objects[objects.length - 1]["binName"],
-                                object_id: "" + objects[objects.length - 1]["productBinId"] + ""
-                            });
-                            console.log(robotServiceClient);
-                            setIsRobotMoving(true);
-                            if (!debug) {
-                                let startTime = Date.now();
-                                await robotServiceClient.callService(request, function (result: any) {
-                                    console.log("Received back from the Robot: " +
-                                        robotServiceClient.name +
-                                        ': ' +
-                                        result.success)
-                                    setIsRobotMoving(false);
-                                    let endTime = Date.now();
-                                    console.log(endTime - startTime);
-                                    edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
-                                }).then((res:any) => {
-                                    console.log(res)
-                                });
-                                console.log("hello")
 
-                                // await robotServiceClient.callService(request, function (result: any) {
-                                //     console.log("Received back from the Robot: " +
-                                //         robotServiceClient.name +
-                                //         ': ' +
-                                //         result)
-                                //     setIsRobotMoving(false);
-                                //     let endTime = Date.now();
-                                //     console.log(endTime - startTime);
-                                //     edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
-                                // });
-                            }
+                            bin_ids.push(objects[objects.length - 1]["binName"]);
+                            object_ids.push("" + objects[objects.length - 1]["productBinId"] + "")
+                            // sendRequestToRobot(objects[objects.length - 1]["binName"], objects[objects.length - 1]["productBinId"])
+                            //var request = new ROSLIB.ServiceRequest({
+                            //    bin_id: objects[objects.length - 1]["binName"],
+                            //    object_id: "" + objects[objects.length - 1]["productBinId"] + ""
+                            //});
+                            //listOfRequests.push(request);
+                            setIsRobotMoving(true);
                             break;
                         }
                     }
-
                 } else {
                     setErrorObjects(current => [...current, asinValue]);
                 }
             }
+            if (!debug) {
+                let startTime = Date.now();
+
+
+
+
+                var request = new ROSLIB.ServiceRequest({
+                    bin_ids: bin_ids,
+                    object_ids: object_ids
+                });
+                console.log(request);
+
+                let ros: any;
+                ros = new ROSLIB.Ros({
+                    url: 'ws://control:9090'
+                });
+
+                ros.on('connection', function () {
+                    console.log('Connected to websocket server.');
+                    setIsConnected(true);
+                });
+
+                ros.on('error', function (error: any) {
+                    console.log('Error connecting to websocket server: ', error);
+                    setIsConnected(false);
+                });
+
+                ros.on('close', function () {
+                    console.log('Connection to websocket server closed.');
+                    setIsConnected(false);
+                });
+
+                let robotServiceClient = new ROSLIB.Service({
+                    ros: ros,
+                    name: "aurmr_demo/multiple_pick",
+                    serviceType: "/aurmr_tasks/MultiplePickRequest"
+                });
+                
+                robotServiceClient.callService(request, function (result: any) {
+                    console.log("Received back from the Robot: " +
+                        robotServiceClient.name +
+                        ': ' +
+                        result.success)
+                    setIsRobotMoving(false);
+                    let endTime = Date.now();
+                    console.log(endTime - startTime);
+                    // edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
+                })
+
+            }
         }
-    }
-
-    async function sendRequestToRobot(binName: string, prodBinId: string) {
-        
-
     }
 
     return (
         <>
             <div id="left-content">
-                <Button onClick={connectToRos}>Connect to Robot</Button>
+                {/* <Button onClick={connectToRos}>Connect to Robot</Button> */}
 
                 {isRobotMoving
                     ? <div> <p>Robot is moving</p>  {debug

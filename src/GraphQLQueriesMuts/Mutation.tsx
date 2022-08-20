@@ -25,6 +25,8 @@ export const ADD_PICK_FOR_AN_EVAL = gql`
     mutation addPickWithOnlyProdBin($ProductBinId: Int!) {
         addPickWithOnlyProdBin(ProductBinId: $ProductBinId) {
             ProductBinId
+            Outcome
+            TimeTakenSec
         }
     }
 `

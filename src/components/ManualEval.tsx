@@ -99,6 +99,7 @@ function ManualEval(props: any) {
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
     const [submitableProdBinId, setSubmitableProdBinId] = useState<string>("");
+    const [photoTaken, setPhotoTaken] = useState<boolean>(false);
 
     let submitableProdBinId2 = "";
 
@@ -195,12 +196,15 @@ function ManualEval(props: any) {
                 setBinErrorMsg("");
                 asinErr = false;
                 setBinIdDisabled(false);
-                let previousProdBin = await OneProdBinRefetch({evalName: submitableEvalName});
+                let previousProdBin = await OneProdBinRefetch({ evalName: submitableEvalName });
                 console.log(previousProdBin);
                 if (previousProdBin.data.getProdBinsFromEvalName.length != 0) {
                     console.log("entered")
-                    onClickTakePhoto();
-                }                    
+                    if (!photoTaken) {
+                        onClickTakePhoto();
+                    }
+                }
+                refBin.current!.focus();
             } else {
                 console.log("Product doesn't have size information in the DB.");
                 setBinErrorMsg("Product doesn't have size information in the DB.");
@@ -571,13 +575,14 @@ function ManualEval(props: any) {
                     ': ' +
                     result);
                 setIsRobotMoving(false);
+                setPhotoTaken(true);
             });
         }
         refBin.current!.focus();
     }
 
     async function onClickTakePhoto() {
-        let previousObjectQuery = await OneProdBinRefetch({evalName: submitableEvalName});
+        let previousObjectQuery = await OneProdBinRefetch({ evalName: submitableEvalName });
         console.log(previousObjectQuery);
         let prevObj = previousObjectQuery.data.getProdBinsFromEvalName;
         sendRequestToRobot(prevObj[prevObj.length - 1].bin.BinName, prevObj[prevObj.length - 1].id);
@@ -680,7 +685,7 @@ function ManualEval(props: any) {
                                     <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
                                 </FormControl>
                                 <div>
-                                    
+
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
                                     <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>
@@ -701,7 +706,7 @@ function ManualEval(props: any) {
                                 <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
 
                                 <div>
-                                    
+
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
                                     <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>
