@@ -186,7 +186,7 @@ function PickHandler(props: PickHandlerProps) {
                     name: "aurmr_demo/multiple_pick",
                     serviceType: "/aurmr_tasks/MultiplePickRequest"
                 });
-                
+
                 robotServiceClient.callService(request, function (result: any) {
                     console.log("Received back from the Robot: " +
                         robotServiceClient.name +
@@ -208,7 +208,7 @@ function PickHandler(props: PickHandlerProps) {
                 {/* <Button onClick={connectToRos}>Connect to Robot</Button> */}
 
                 {isRobotMoving
-                    ? <div> <p>Robot is moving</p>  {debug
+                    ? <div> <p>Robot is executing the Picks. Please wait...</p>  {debug
                         ? <Button onClick={() => setIsRobotMoving(false)}>Done Moving</Button>
                         : <br />}
                     </div>
@@ -243,7 +243,7 @@ function PickHandler(props: PickHandlerProps) {
                     )}
                 </CSVReader>
                 <br />
-                <div id="heading-text">Number of Picks</div>
+                {/* <div id="heading-text">Number of Picks</div>
                 <textarea
                     id="pick-text-area"
                     onChange={(event) => setPickTextArea(event.target.value)}
@@ -253,7 +253,7 @@ function PickHandler(props: PickHandlerProps) {
                         }
                     }}
                     value={pickTextArea}
-                /> <br />
+                /> <br /> */}
                 <div id="heading-text">Evaluation Name</div>
                 <textarea
                     id="pick-text-area"
@@ -274,11 +274,11 @@ function PickHandler(props: PickHandlerProps) {
             <div id="left-content">
                 <div id="heading-text">Pick Info</div>
             </div>
+
+            <ObjectTable objectList={picks} />
             <Table>
                 {tableToDisplay}
             </Table>
-
-            <ObjectTable objectList={picks} />
 
             <div id="left-content">
                 <div id="heading-text">Error ASINs</div>

@@ -56,7 +56,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = false;
+    const debug: boolean = true;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
@@ -99,7 +99,9 @@ function ManualEval(props: any) {
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
     const [submitableProdBinId, setSubmitableProdBinId] = useState<string>("");
-    const [photoTaken, setPhotoTaken] = useState<boolean>(false);
+
+    const [autoFocusASIN, setAutoFocusASIN] = useState<boolean>(false);
+    const [autoFocusBin, setAutoFocusBin] = useState<boolean>(false);
 
     let submitableProdBinId2 = "";
 
@@ -136,7 +138,6 @@ function ManualEval(props: any) {
     }
 
 
-
     let binList: string[] = [];
     let binInfoList: any[] = [];
     let prodList: string[] = [];
@@ -157,7 +158,6 @@ function ManualEval(props: any) {
     if (prodError) return <p>Error: {prodError.message}</p>
     if (addProdToBinError) return <p>Error: {addProdToBinError.message}</p>
     // if (evalError) return <p>Error: {evalError.message}</p>
-
 
     for (let i = 0; i < Object.keys(BinData.getAllBins).length; i++) {
         binList.push(BinData.getAllBins[i].BinId);
@@ -199,12 +199,9 @@ function ManualEval(props: any) {
                 let previousProdBin = await OneProdBinRefetch({ evalName: submitableEvalName });
                 console.log(previousProdBin);
                 if (previousProdBin.data.getProdBinsFromEvalName.length != 0) {
-                    console.log("entered")
-                    if (!photoTaken) {
                         onClickTakePhoto();
-                    }
                 }
-                refBin.current!.focus();
+                setAutoFocusBin(true);
             } else {
                 console.log("Product doesn't have size information in the DB.");
                 setBinErrorMsg("Product doesn't have size information in the DB.");
@@ -378,10 +375,10 @@ function ManualEval(props: any) {
             setisAsinError(false);
             setisBinError(false);
             setBinErrorMsg("");
-            refASIN.current!.focus();
             console.log(await evalRefetch({ evalName: submitableEvalName }));
             generateTable();
             // sendRequestToRobot(submitableBin, submitableProd);
+            setAutoFocusASIN(true);
         }
     }
 
@@ -398,7 +395,6 @@ function ManualEval(props: any) {
             setisAsinError(false);
             setisBinError(false);
             setBinErrorMsg("");
-            refASIN.current!.focus();
             generateTable();
             // sendRequestToRobot(submitableBin, submitableProd);
         }
@@ -527,7 +523,6 @@ function ManualEval(props: any) {
         setSubmitableBin("");
         setBinErrorMsg("");
         setBinIdDisabled(true);
-        refASIN.current!.focus();
     }
 
     function onClickReset() {
@@ -549,7 +544,6 @@ function ManualEval(props: any) {
         setMaxBinGCUDisabled(false);
         setMaxBinGCUError(false);
         setBinIdDisabled(true);
-        refASIN.current!.focus();
     }
 
     function getGreenToRed(percent: number) {
@@ -575,10 +569,8 @@ function ManualEval(props: any) {
                     ': ' +
                     result);
                 setIsRobotMoving(false);
-                setPhotoTaken(true);
             });
         }
-        refBin.current!.focus();
     }
 
     async function onClickTakePhoto() {
@@ -586,6 +578,11 @@ function ManualEval(props: any) {
         console.log(previousObjectQuery);
         let prevObj = previousObjectQuery.data.getProdBinsFromEvalName;
         sendRequestToRobot(prevObj[prevObj.length - 1].bin.BinName, prevObj[prevObj.length - 1].id);
+        
+    }
+
+    async function onClickRecMessage() {
+        setIsRobotMoving(false);
     }
 
     return (
@@ -593,8 +590,8 @@ function ManualEval(props: any) {
             <h1>Manual Evaluation</h1>
             {isRobotMoving ?
                 <div id="topStuff">
-                    <p>Robot is moving. Please wait...</p>
-                    {debug ? <Button onClick={() => setIsRobotMoving(false)}>Received Message</Button> : <br />}
+                    <p>The camera is taking a picture of the previously stowed object. Please wait...</p>
+                    {debug ? <Button onClick={onClickRecMessage}>Received Message</Button> : <br />}
                 </div> :
                 <div id="topStuff">
                     <p style={{ "display": "inline", "marginLeft": "15px" }}>Step 1: </p><Button disabled={isConnected} style={{ "display": "inline" }} variant="contained" id="connectToBot" onClick={connectToRos}>Connect to Robot</Button>
@@ -677,12 +674,14 @@ function ManualEval(props: any) {
                                 <FormLabel component="legend">Enter Automatically:</FormLabel>
                                 <FormControl id="itemInput" error={isASINError} variant="standard">
                                     <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                    <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                                    <Input inputRef={refASIN} autoFocus={true} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
                                 </FormControl>
 
                                 <FormControl id="binInput" error={isBinError} variant="standard">
                                     <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
                                     <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
+
+
                                 </FormControl>
                                 <div>
 
@@ -696,7 +695,7 @@ function ManualEval(props: any) {
                                 <FormLabel component="legend">Enter Manually:</FormLabel>
                                 <FormControl id="itemInput" error={isASINError} variant="standard">
                                     <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                    <Input autoFocus={true} inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                                    <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
                                 </FormControl>
 
                                 <FormControl id="binInput" error={isBinError} variant="standard">

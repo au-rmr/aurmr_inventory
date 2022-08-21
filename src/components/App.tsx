@@ -40,14 +40,14 @@ function App() {
   return (
     <Router>
       <NavUnlisted>
-          <NavLink to="/">
+          {/* <NavLink to="/">
             <li>Home</li>
           </NavLink>
           <NavLink to="/evaluator">
             <li>Evaluator</li>
-          </NavLink>
-          <NavLink to="/manualevaluation">
-            <li>Manual Evaluation</li>
+          </NavLink> */}
+          <NavLink to="/">
+            <li>Stow Handler</li>
           </NavLink>
           {/* <NavLink to="/manualevaluation2">
             <li>Manual Evaluation 2.0</li>
@@ -55,14 +55,14 @@ function App() {
           <NavLink to="/pickhandler">
             <li>Pick Handler</li>
           </NavLink>
-          <NavLink to="/pickhandler2">
+          {/* <NavLink to="/pickhandler2">
             <li>Pick Handler 2</li>
-          </NavLink>
+          </NavLink> */}
       </NavUnlisted>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* <Route path="/" element={<Home />} /> */}
         <Route path="/evaluator" element={<div id="main"><Evaluator /></div>} />
-        <Route path="/manualevaluation" element={<ManualEval />} />
+        <Route path="/" element={<ManualEval />} />
         <Route path="/manualevaluation2" element={<ManualEval2 />} />
         <Route path="/manualevaluation/editBin/:binId" element={<EditBin />} />
         <Route path="/pickhandler" element={<PickHandler />} />

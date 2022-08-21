@@ -31,6 +31,7 @@
     "mathjs": "^11.0.1",
     "react": "^18.2.0",
     "react-apollo": "^3.1.5",
+    "react-aria": "^3.18.0",
     "react-dom": "^18.2.0",
     "react-papaparse": "^4.0.4",
     "react-ros": "^0.10.0",
