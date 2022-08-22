@@ -56,7 +56,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = true;
+    const debug: boolean = false;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
