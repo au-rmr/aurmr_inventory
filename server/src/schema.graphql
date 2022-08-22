@@ -29,6 +29,8 @@ type Query {
 
   getAmazonProductFromEval(evalName: String!, asin: String!): [ProductBin]
 
+  getAmazonProductsFromEval(evalName: String!): [ProductBin]
+
   getProdBinsFromEvalName(evalName: String!): [ProductBin]
 }
 

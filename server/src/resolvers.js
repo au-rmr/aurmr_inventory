@@ -324,11 +324,12 @@ module.exports = {
                     }
                 }, 
                 include: {
-                    bin: true
+                    bin: true, 
+                    amazonProduct: true
                 }
             })
             return prodbins;
-        }
+        }, 
     },
 
     Mutation: {

@@ -2,7 +2,7 @@ import './../styles/App.css';
 import { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { Button } from '@mui/material';
-import { GET_PROD_BIN_IDS, GET_PICKS_FROM_PROD_BIN_IDS, GET_PROD_FROM_EVAL } from '../GraphQLQueriesMuts/Query';
+import { GET_PROD_BIN_IDS, GET_PICKS_FROM_PROD_BIN_IDS, GET_PROD_FROM_EVAL, GET_PRODBINID_FROM_EVALNAME } from '../GraphQLQueriesMuts/Query';
 import { ADD_PICK_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { GET_BIN_FROM_BINID } from '../GraphQLQueriesMuts/Query';
 import { EDIT_PICK_OUTCOME_TIME } from '../GraphQLQueriesMuts/Mutation';
@@ -49,6 +49,7 @@ function PickHandler(props: PickHandlerProps) {
     const { data: OneBinData, loading: OneBinLoading, error: OneBinError, refetch: OneBinRefetch } = useQuery(GET_BIN_FROM_BINID);
     const [add_pick] = useMutation(ADD_PICK_FOR_AN_EVAL);
     const [edit_pick] = useMutation(EDIT_PICK_OUTCOME_TIME);
+    const {refetch: getItemsFromEval} = useQuery(GET_PRODBINID_FROM_EVALNAME);
 
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -202,6 +203,23 @@ function PickHandler(props: PickHandlerProps) {
         }
     }
 
+    async function clickDownload() {
+        let getProdsFromEval = await getItemsFromEval({evalName: evalTextArea});
+        let allProdsToDownload = [];
+        console.log(getProdsFromEval);
+        let csvContent = "data:text/csv;charset=utf-8,";
+        for (let i = 0; i < getProdsFromEval.data.getProdBinsFromEvalName.length; i++) {
+            allProdsToDownload.push(getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.asin);
+        }
+        for (let j = 0; j < allProdsToDownload.length; j++) { 
+            csvContent += allProdsToDownload[j]; 
+            csvContent += "\n";
+        }
+        console.log(allProdsToDownload);
+        var encodedUri = encodeURI(csvContent);
+        window.open(encodedUri);
+    }
+
     return (
         <>
             <div id="left-content">
@@ -213,6 +231,21 @@ function PickHandler(props: PickHandlerProps) {
                         : <br />}
                     </div>
                     : <br />}
+
+                <div id="heading-text">Download All ASINs in the evalauation</div>
+                <div id="heading-text">Evaluation Name</div>
+                <textarea
+                    id="pick-text-area"
+                    onChange={(event) => setEvalTextArea(event.target.value)}
+                    onKeyPress={e => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            onSubmit();
+                        }
+                    }}
+                    value={evalTextArea}
+                /> <br />
+                <Button onClick={clickDownload}>Download</Button>
 
                 <div id="heading-text">Upload File</div>
                 <CSVReader
@@ -254,7 +287,7 @@ function PickHandler(props: PickHandlerProps) {
                     }}
                     value={pickTextArea}
                 /> <br /> */}
-                <div id="heading-text">Evaluation Name</div>
+                {/* <div id="heading-text">Evaluation Name</div>
                 <textarea
                     id="pick-text-area"
                     onChange={(event) => setEvalTextArea(event.target.value)}
@@ -265,7 +298,7 @@ function PickHandler(props: PickHandlerProps) {
                         }
                     }}
                     value={evalTextArea}
-                /> <br />
+                /> <br /> */}
 
                 <Button id="pick-button" variant="contained" color="success" onClick={onSubmit}>Submit</Button>
 
