@@ -56,7 +56,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = false;
+    const debug: boolean = true;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
@@ -182,6 +182,21 @@ function ManualEval(props: any) {
 
     for (let j = 0; j < Object.keys(prodData.getAllProducts).length; j++) {
         prodList.push(prodData.getAllProducts[j].asin)
+    }
+
+    function isASINValid(item: string): boolean {
+        if (prodList.includes(item)) {
+            return true;
+        }
+        return false;
+    }
+
+    if (!isASINError && submitableProd != "" && isASINValid(submitableProd)) {
+        refBin.current?.focus();
+    }
+
+    if (!isASINError && submitableProd == "" && maxBinGCUDisabled && tableDisabled && evalNameDisabled) {
+        refASIN.current?.focus();
     }
 
     const checkValidASIN = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -569,6 +584,10 @@ function ManualEval(props: any) {
                     ': ' +
                     result);
                 setIsRobotMoving(false);
+                if (!isASINError && submitableProd != "" && isASINValid(submitableProd)) {
+                    console.log(refBin)
+                    refBin.current?.focus();
+                }
             });
         }
     }
@@ -583,11 +602,15 @@ function ManualEval(props: any) {
 
     async function onClickRecMessage() {
         setIsRobotMoving(false);
+        if (!isASINError && submitableProd != "" && isASINValid(submitableProd)) {
+            console.log(refBin)
+            refBin.current?.focus();
+        }
     }
 
     return (
         <div id="overall">
-            <h1>Manual Evaluation</h1>
+            <h1>Stow Handler</h1>
             {isRobotMoving ?
                 <div id="topStuff">
                     <p>The camera is taking a picture of the previously stowed object. Please wait...</p>
@@ -674,7 +697,7 @@ function ManualEval(props: any) {
                                 <FormLabel component="legend">Enter Automatically:</FormLabel>
                                 <FormControl id="itemInput" error={isASINError} variant="standard">
                                     <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                    <Input inputRef={refASIN} autoFocus={true} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                                    <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
                                 </FormControl>
 
                                 <FormControl id="binInput" error={isBinError} variant="standard">
