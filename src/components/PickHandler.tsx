@@ -80,22 +80,11 @@ function PickHandler(props: PickHandlerProps) {
         }));
     }
 
-    function parsePickText() {
-        let num = parseInt(pickTextArea as string);
-        if (isNaN(num) || num < 0 || num > 100) {
-            alert("Invalid entry please enter numbers between 0-100.");
-            return;
-        }
-
-        return num;
-    }
-
     async function onSubmit() {
-        const numPicks = parsePickText();
         let objects: TableObject[] = [];
         setPicks([]);
         setErrorObjects([]);
-        if (uploadedData && evalTextArea && numPicks) {
+        if (uploadedData && evalTextArea) {
             let bin_ids: string[] = [];
             let object_ids: string[] = [];
 
@@ -243,17 +232,6 @@ function PickHandler(props: PickHandlerProps) {
                     )}
                 </CSVReader>
                 <br />
-                {/* <div id="heading-text">Number of Picks</div>
-                <textarea
-                    id="pick-text-area"
-                    onChange={(event) => setPickTextArea(event.target.value)}
-                    onKeyPress={e => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                        }
-                    }}
-                    value={pickTextArea}
-                /> <br /> */}
                 <div id="heading-text">Evaluation Name</div>
                 <textarea
                     id="pick-text-area"
@@ -290,7 +268,6 @@ function PickHandler(props: PickHandlerProps) {
             </div>
         </>
     );
-
 }
 
 export default PickHandler;

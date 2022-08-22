@@ -61,6 +61,11 @@ function ManualEval(props: any) {
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
 
+    const tableHalf = {
+        rows: 4, 
+        cols: 4
+    }
+
     const table1 = {
         rows: 13,
         cols: 4
@@ -109,6 +114,7 @@ function ManualEval(props: any) {
 
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
+    
     function connectToRos() {
         let ros: any;
         ros = new ROSLIB.Ros({
@@ -152,6 +158,15 @@ function ManualEval(props: any) {
     const { data: OneBinData, loading: OneBinLoading, error: OneBinError, refetch: OneBinRefetch } = useQuery(GET_BIN_FROM_BINID);
     const { data: OneProdBinData, loading: OneProdBinLoading, error: OneProdBinError, refetch: OneProdBinRefetch } = useQuery(GET_PRODBINID_FROM_EVALNAME)
 
+    useEffect(() => {
+        if (!isASINError && submitableProd != "" && isASINValid(submitableProd)) {
+            refBin.current?.focus();
+        }
+        if (!isASINError && submitableProd == "" && maxBinGCUDisabled && tableDisabled && evalNameDisabled) {
+            refASIN.current?.focus();
+        }
+    }, [isRobotMoving, submitMessage]);
+
     if ((BinLoading) || (prodLoading) || (evalLoading) || (eachBinDataLoading)) return <p>Loading...</p>;
     if (addProdToBinLoading) return <p>Submitting...</p>
     if (BinError) return <p>Error: {BinError.message}</p>
@@ -191,14 +206,6 @@ function ManualEval(props: any) {
         return false;
     }
 
-    if (!isASINError && submitableProd != "" && isASINValid(submitableProd)) {
-        refBin.current?.focus();
-    }
-
-    if (!isASINError && submitableProd == "" && maxBinGCUDisabled && tableDisabled && evalNameDisabled) {
-        refASIN.current?.focus();
-    }
-
     const checkValidASIN = async (e: React.ChangeEvent<HTMLInputElement>) => {
         console.log(e.target.value);
         setSubmitableProd(e.target.value);
@@ -214,7 +221,7 @@ function ManualEval(props: any) {
                 let previousProdBin = await OneProdBinRefetch({ evalName: submitableEvalName });
                 console.log(previousProdBin);
                 if (previousProdBin.data.getProdBinsFromEvalName.length != 0) {
-                        onClickTakePhoto();
+                    onClickTakePhoto();
                 }
                 setAutoFocusBin(true);
             } else {
@@ -288,6 +295,8 @@ function ManualEval(props: any) {
         let count = 0;
         let binErr: boolean = true;
         for (let i = 0; i < binInfoList.length; i++) {
+            console.log(binInfoList[i]["tableName"])
+            console.log(tableName)
             if (binInfoList[i]["tableName"] == tableName) {
                 binListToCheck[count] = binInfoList[i]["binId"];
                 count++;
@@ -425,7 +434,12 @@ function ManualEval(props: any) {
             let binVol: number = 0;
             let rowVol: number = 0;
             for (let j = 1; j <= table.cols; j++) {
-                let binName1: string = j + String.fromCharCode(64 + i);
+                let binName1: string = ""
+                if (table.rows != 4) {
+                    binName1 = j + String.fromCharCode(64 + i);
+                } else {
+                    binName1 = j + String.fromCharCode(68 + i);
+                }                
                 let binsize: string = "";
                 let binsizeunits: string = "";
                 for (let k = 0; k < binInfoList.length; k++) {
@@ -499,6 +513,8 @@ function ManualEval(props: any) {
             generateTableHelper(table1);
         } else if (submitableEvalName != "" && tableName == "2") {
             generateTableHelper(table2);
+        } else if (submitableEvalName != "" && tableName == "1Half") {
+            generateTableHelper(tableHalf);
         }
     }
 
@@ -597,7 +613,7 @@ function ManualEval(props: any) {
         console.log(previousObjectQuery);
         let prevObj = previousObjectQuery.data.getProdBinsFromEvalName;
         sendRequestToRobot(prevObj[prevObj.length - 1].bin.BinName, prevObj[prevObj.length - 1].id);
-        
+
     }
 
     async function onClickRecMessage() {
@@ -635,13 +651,19 @@ function ManualEval(props: any) {
                             <RadioGroup value={tableName} row>
                                 <FormControlLabel
                                     control={
-                                        <Radio onChange={(e) => setTableName("1")} value="1" name="1" />
+                                        <Radio onChange={(e) => setTableName("1Half")} value="1Half" name="1Half" />
+                                    }
+                                    label="Pod 1 (6-inch) Half"
+                                />
+                                <FormControlLabel
+                                    control={
+                                        <Radio disabled onChange={(e) => setTableName("1")} value="1" name="1" />
                                     }
                                     label="Pod 1 (6-inch)"
                                 />
                                 <FormControlLabel
                                     control={
-                                        <Radio onChange={(e) => setTableName("2")} value="2" name="2" />
+                                        <Radio disabled onChange={(e) => setTableName("2")} value="2" name="2" />
                                     }
                                     label="Pod 2 (14-inch)"
                                 />
@@ -697,17 +719,15 @@ function ManualEval(props: any) {
                                 <FormLabel component="legend">Enter Automatically:</FormLabel>
                                 <FormControl id="itemInput" error={isASINError} variant="standard">
                                     <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                    <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                                    <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" autoFocus={true}/>
                                 </FormControl>
 
                                 <FormControl id="binInput" error={isBinError} variant="standard">
                                     <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
                                     <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
-
-
                                 </FormControl>
-                                <div>
 
+                                <div>
                                     <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
                                     <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
                                     <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>

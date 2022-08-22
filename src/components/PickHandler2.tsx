@@ -79,22 +79,22 @@ function PickHandler(props: PickHandlerProps) {
         }));
     }
 
-    function parsePickText() {
-        let num = parseInt(pickTextArea as string);
-        if (isNaN(num) || num < 0 || num > 100) {
-            alert("Invalid entry please enter numbers between 0-100.");
-            return;
-        }
+    // function parsePickText() {
+    //     let num = parseInt(pickTextArea as string);
+    //     if (isNaN(num) || num < 0 || num > 100) {
+    //         alert("Invalid entry please enter numbers between 0-100.");
+    //         return;
+    //     }
 
-        return num;
-    }
+    //     return num;
+    // }
 
     async function onSubmit() {
-        const numPicks = parsePickText();
+        // const numPicks = parsePickText();
         let objects: TableObject[] = [];
         setPicks([]);
         setErrorObjects([]);
-        if (uploadedData && evalTextArea && numPicks) {
+        if (uploadedData && evalTextArea) {
             for (let i = 0; i < uploadedData.length; i++) {
                 const asinValue = uploadedData[i][0];
                 console.log(asinValue)
