@@ -80,40 +80,43 @@ function PickHandler(props: PickHandlerProps) {
                 console.log(objectsInEval);
                 // object not in eval check
                 if (objectsInEval.data.getAmazonProductFromEval.length > 0) {
-                    let value = await prodBinRefetch({ asin: asinValue, binId: objectsInEval.data.getAmazonProductFromEval[0].bin.BinId, evalName: evalTextArea });
-                    let valueArr = value.data.getProductBinFromAmazonProductBinEval;
-                    console.log(valueArr)
-                    for (let k = 0; k < valueArr.length; k++) {
-                        let prodBinIds = await picksFromProdBinRefetch({ ProductBinId: parseInt(valueArr[k].id) });
-                        console.log(prodBinIds);
-                        if (prodBinIds.data.getPicksFromProductBin.length == 0) {
-                            objects.push({
-                                "asin": asinValue,
-                                "productName": objectsInEval.data.getAmazonProductFromEval[0].amazonProduct.name,
-                                "productBinId": valueArr[k].id,
-                                "binName": objectsInEval.data.getAmazonProductFromEval[0].bin.BinName
-                            });
-                            let addedPick = await add_pick({ variables: { ProductBinId: parseInt(valueArr[k].id) } });
-                            console.log(addedPick);
-                            pickId = addedPick.data.addPickWithOnlyProdBin.id;
-                            console.log(pickId)
-                            let tablecell: JSX.Element =
-                                <TableRow>
-                                    <TableCell>{objects[objects.length - 1]["productName"]}</TableCell>
-                                    <TableCell>{objects[objects.length - 1]["asin"]}</TableCell>
-                                    <TableCell>{objects[objects.length - 1]["binName"]}</TableCell>
-                                    <TableCell>{objects[objects.length - 1]["productBinId"]}</TableCell>
-                                </TableRow>
-                            console.log(objects)
-                            setTableToDisplay(current => [...current, tablecell])
+                    for (let j = 0; j < objectsInEval.data.getAmazonProductFromEval.length; j++) {
+                        let value = await prodBinRefetch({ asin: asinValue, binId: objectsInEval.data.getAmazonProductFromEval[j].bin.BinId, evalName: evalTextArea });
+                        let valueArr = value.data.getProductBinFromAmazonProductBinEval;
+                        console.log(valueArr)
+                        for (let k = 0; k < valueArr.length; k++) {
+                            let prodBinIds = await picksFromProdBinRefetch({ ProductBinId: parseInt(valueArr[k].id) });
+                            console.log(prodBinIds);
+                            if (prodBinIds.data.getPicksFromProductBin.length == 0) {
+                                objects.push({
+                                    "asin": asinValue,
+                                    "productName": objectsInEval.data.getAmazonProductFromEval[j].amazonProduct.name,
+                                    "productBinId": valueArr[k].id,
+                                    "binName": objectsInEval.data.getAmazonProductFromEval[j].bin.BinName
+                                });
+                                let addedPick = await add_pick({ variables: { ProductBinId: parseInt(valueArr[k].id) } });
+                                console.log(addedPick);
+                                pickId = addedPick.data.addPickWithOnlyProdBin.id;
+                                console.log(pickId)
+                                let tablecell: JSX.Element =
+                                    <TableRow>
+                                        <TableCell>{objects[objects.length - 1]["productName"]}</TableCell>
+                                        <TableCell>{objects[objects.length - 1]["asin"]}</TableCell>
+                                        <TableCell>{objects[objects.length - 1]["binName"]}</TableCell>
+                                        <TableCell>{objects[objects.length - 1]["productBinId"]}</TableCell>
+                                    </TableRow>
+                                console.log(objects)
+                                setTableToDisplay(current => [...current, tablecell])
 
-                            bin_ids.push(objects[objects.length - 1]["binName"]);
-                            object_ids.push("" + objects[objects.length - 1]["productBinId"] + "")
+                                bin_ids.push(objects[objects.length - 1]["binName"]);
+                                object_ids.push("" + objects[objects.length - 1]["productBinId"] + "")
 
-                            setIsRobotMoving(true);
-                            break;
+                                setIsRobotMoving(true);
+                                break;
+                            }
                         }
                     }
+
                 } else {
                     setErrorObjects(current => [...current, asinValue]);
                 }
@@ -251,7 +254,7 @@ function PickHandler(props: PickHandlerProps) {
                 <div>
                     <div id="heading-text">Pick Info</div>
                     <TableContainer id="table" component={Paper}>
-                        <Table size="small"> 
+                        <Table size="small">
                             {tableToDisplay}
                         </Table>
                     </TableContainer>
