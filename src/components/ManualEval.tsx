@@ -56,7 +56,7 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = true;
+    const debug: boolean = false;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
@@ -108,6 +108,7 @@ function ManualEval(props: any) {
     const [currTotalObjVol, setCurrTotalObjVol] = useState<number>(0);
     const [currPodVol, setCurrPodVol] = useState<number>(0);
     const [newPotGCU, setNewPotGCU] = useState<number>(0);
+    const [isPhotoTaken, setIsPhotoTaken] = useState<boolean>(false);
 
     const [autoFocusASIN, setAutoFocusASIN] = useState<boolean>(false);
     const [autoFocusBin, setAutoFocusBin] = useState<boolean>(false);
@@ -232,7 +233,10 @@ function ManualEval(props: any) {
 
                 let previousProdBin = await OneProdBinRefetch({ evalName: submitableEvalName });
                 if (previousProdBin.data.getProdBinsFromEvalName.length != 0) {
-                    onClickTakePhoto();
+                    if (!isPhotoTaken) {
+                        onClickTakePhoto();
+                        setIsPhotoTaken(true);
+                    }                    
                 }
                 setAutoFocusBin(true);
             } else {
@@ -409,6 +413,7 @@ function ManualEval(props: any) {
             // sendRequestToRobot(submitableBin, submitableProd);
             setAutoFocusASIN(true);
             setNewPotGCU(0);
+            setIsPhotoTaken(false);
         }
     }
 
@@ -428,6 +433,7 @@ function ManualEval(props: any) {
             generateTable();
             // sendRequestToRobot(submitableBin, submitableProd);
             setNewPotGCU(0);
+            setIsPhotoTaken(false);
         }
     }
 
@@ -598,6 +604,7 @@ function ManualEval(props: any) {
         setNewPotGCU(0);
         setCurrTotalObjVol(0);
         setCurrPodVol(0);
+        setIsPhotoTaken(false);
     }
 
     function getGreenToRed(percent: number) {

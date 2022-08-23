@@ -28,14 +28,23 @@ interface TableObject {
 }
 
 function PickHandler(props: PickHandlerProps) {
-    const debug = true;
+    const debug = false;
 
     const [evalTextArea, setEvalTextArea] = useState<string>("");
     const [pickTextArea, setPickTextArea] = useState<string>("");
     const [uploadedData, setUploadedData] = useState<string[]>();
     const [picks, setPicks] = useState<TableObject[]>([]);
     const [errorObjects, setErrorObjects] = useState<string[]>([]);
-    const [tableToDisplay, setTableToDisplay] = useState<JSX.Element[]>([]);
+    const [tableToDisplay, setTableToDisplay] = useState<JSX.Element[]>([
+        <TableHead>
+            <TableRow>
+                <TableCell><strong>Product Name</strong></TableCell>
+                <TableCell align="right"><strong>ASIN</strong></TableCell>
+                <TableCell align="right"><strong>Bin Name</strong></TableCell>
+                <TableCell align="right"><strong>Product Bin ID</strong></TableCell>
+            </TableRow>
+        </TableHead>
+    ]);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
 
     let pickId = "";
@@ -62,17 +71,6 @@ function PickHandler(props: PickHandlerProps) {
             let bin_ids: string[] = [];
             let object_ids: string[] = [];
 
-            let initialHeader: JSX.Element =
-
-                <TableHead>
-                    <TableRow>
-                        <TableCell><strong>Product Name</strong></TableCell>
-                        <TableCell align="right"><strong>ASIN</strong></TableCell>
-                        <TableCell align="right"><strong>Bin Name</strong></TableCell>
-                        <TableCell align="right"><strong>Product Bin ID</strong></TableCell>
-                    </TableRow>
-                </TableHead>
-            setTableToDisplay(current => [...current, initialHeader]);
             for (let i = 0; i < uploadedData.length; i++) {
                 const asinValue = uploadedData[i][0];
                 console.log(asinValue)
@@ -166,9 +164,44 @@ function PickHandler(props: PickHandlerProps) {
                     // edit_pick({variables: {id: pickId, outcome: result.success, time: (endTime - startTime)}});
                 })
 
+                var listener = new ROSLIB.Topic({
+                    ros: ros,
+                    name: '/demo_status',
+                    messageType: 'std_msgs/String'
+                });
+        
+                listener.subscribe(function (message) {
+                    console.log(message);
+                    // listener.unsubscribe();
+                });
+
             }
         }
     }
+
+    // async function listenToMessage() {
+    //     let ros: any;
+    //     ros = new ROSLIB.Ros({
+    //         url: 'ws://control:9090'
+    //     });
+
+    //     ros.on('connection', function () {
+    //         console.log('Connected to websocket server.');
+    //         setIsConnected(true);
+    //     });
+
+    //     ros.on('error', function (error: any) {
+    //         console.log('Error connecting to websocket server: ', error);
+    //         setIsConnected(false);
+    //     });
+
+    //     ros.on('close', function () {
+    //         console.log('Connection to websocket server closed.');
+    //         setIsConnected(false);
+    //     });
+
+        
+    // }
 
     async function clickDownload() {
         let getProdsFromEval = await getItemsFromEval({ evalName: evalTextArea });
