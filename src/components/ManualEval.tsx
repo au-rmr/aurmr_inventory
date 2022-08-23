@@ -56,13 +56,13 @@ interface ManualEvalState {
 }
 
 function ManualEval(props: any) {
-    const debug: boolean = false;
+    const debug: boolean = true;
 
     const NUM_ROWS: number = 10;
     const NUM_COLS: number = 10;
 
     const tableHalf = {
-        rows: 4, 
+        rows: 4,
         cols: 4
     }
 
@@ -85,6 +85,7 @@ function ManualEval(props: any) {
     const [submitableProd, setSubmitableProd] = useState<string>("");
     const [submitableBin, setSubmitableBin] = useState<string>("");
     const [binErrorMsg, setBinErrorMsg] = useState<String>("");
+    const [warningMsg, setWarningMsg] = useState<string>("");
     const [submitMessage, setSubmitMessage] = useState<string>("");
     const refASIN = useRef<HTMLInputElement>(null);
     const refBin = useRef<HTMLInputElement>(null);
@@ -104,6 +105,9 @@ function ManualEval(props: any) {
     const [binIdDisabled, setBinIdDisabled] = useState<boolean>(true);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
     const [submitableProdBinId, setSubmitableProdBinId] = useState<string>("");
+    const [currTotalObjVol, setCurrTotalObjVol] = useState<number>(0);
+    const [currPodVol, setCurrPodVol] = useState<number>(0);
+    const [newPotGCU, setNewPotGCU] = useState<number>(0);
 
     const [autoFocusASIN, setAutoFocusASIN] = useState<boolean>(false);
     const [autoFocusBin, setAutoFocusBin] = useState<boolean>(false);
@@ -114,7 +118,7 @@ function ManualEval(props: any) {
 
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
-    
+
     function connectToRos() {
         let ros: any;
         ros = new ROSLIB.Ros({
@@ -207,6 +211,8 @@ function ManualEval(props: any) {
     }
 
     const checkValidASIN = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSubmitMessage("");
+        setWarningMsg("");
         console.log(e.target.value);
         setSubmitableProd(e.target.value);
         let asinErr: boolean = true;
@@ -218,8 +224,13 @@ function ManualEval(props: any) {
                 setBinErrorMsg("");
                 asinErr = false;
                 setBinIdDisabled(false);
+
+                let thisProd = getProdFromDB.data.getProduct[0];
+                let thisProdVol: number = parseFloat(thisProd.size_length) * parseFloat(thisProd.size_width) * parseFloat(thisProd.size_height);
+                let nPotGCU = (currTotalObjVol + thisProdVol) / currPodVol;
+                setNewPotGCU(nPotGCU);
+
                 let previousProdBin = await OneProdBinRefetch({ evalName: submitableEvalName });
-                console.log(previousProdBin);
                 if (previousProdBin.data.getProdBinsFromEvalName.length != 0) {
                     onClickTakePhoto();
                 }
@@ -295,8 +306,6 @@ function ManualEval(props: any) {
         let count = 0;
         let binErr: boolean = true;
         for (let i = 0; i < binInfoList.length; i++) {
-            console.log(binInfoList[i]["tableName"])
-            console.log(tableName)
             if (binInfoList[i]["tableName"] == tableName) {
                 binListToCheck[count] = binInfoList[i]["binId"];
                 count++;
@@ -336,6 +345,7 @@ function ManualEval(props: any) {
                     return;
                 }
             }
+
             console.log(volumeOfProds);
             let newProdToAdd = (await oneProdRefetch({ asin: submitableProd })).data.getProduct[0];
             console.log(newProdToAdd);
@@ -343,41 +353,36 @@ function ManualEval(props: any) {
             let newProdLength = newProdToAdd.size_length;
             let newProdWidth = newProdToAdd.size_width;
             let volumeOfNewProd = newProdHeight * newProdLength * newProdWidth;
+
+            setisBinError(false);
+            setBinErrorMsg("");
+            binErr = false;
+
             if (volumeOfProds + volumeOfNewProd > volumeOfBin - volumeOfProds) {
-                setisBinError(true);
-                binErr = true;
-                console.log("Error: Volume will go above the available volume of the bin.")
-                setBinErrorMsg("Error: Volume will go above the available volume of the bin.")
-                return;
+                console.log("Warning: Volume will go above the available volume of the bin.");
+                setWarningMsg("Warning: Volume will go above the available volume of the bin.");
             } else {
                 let newGCU = (volumeOfProds + volumeOfNewProd) / volumeOfBin;
                 if (newGCU > parseFloat(maxBinGCU)) {
-                    setisBinError(true);
-                    binErr = true;
-                    console.log("Error: The New GCU will go above the specified max GCU.")
-                    setBinErrorMsg("Error: The New GCU will go above the specified max GCU.")
-                    return;
+                    console.log("Warning: The new GCU will go above the specified max GCU.");
+                    setWarningMsg("Warning: The new GCU will go above the specified max GCU.")
                 } else {
                     // Figure out the W - l value for the bin from the items that are currently present in the bin. 
                     if (objOrientationChosen(newProdLength, newProdWidth, newProdHeight, binHeight, binWidth, binDepth, lengthFromWidth) == -1) {
-                        setisBinError(true);
-                        binErr = true;
-                        console.log("Error: The orientation doesn't fit in the bin.")
-                        setBinErrorMsg("Error: The orientation doesn't fit in the bin.")
-                        return;
+                        console.log("Warning: The orientation may not fit inside the selected bin.");
+                        setWarningMsg("Warning: The orientation may not fit inside the selected bin.")
                     } else {
-                        setisBinError(false);
-                        setBinErrorMsg("");
-                        binErr = false;
                         console.log("No errors.");
+                        setWarningMsg("");
                     }
                 }
             }
         } else {
             setisBinError(true);
-            binErr = true;
-            console.log("Error: This bin Id doesn't exist in the pod (or incorrect binId).")
             setBinErrorMsg("Error: This bin Id doesn't exist in the pod (or incorrect binId).")
+            binErr = true;
+
+            console.log("Error: This bin Id doesn't exist in the pod (or incorrect binId).")
             ErrorAudio.play();
             return;
         }
@@ -403,6 +408,7 @@ function ManualEval(props: any) {
             generateTable();
             // sendRequestToRobot(submitableBin, submitableProd);
             setAutoFocusASIN(true);
+            setNewPotGCU(0);
         }
     }
 
@@ -421,6 +427,7 @@ function ManualEval(props: any) {
             setBinErrorMsg("");
             generateTable();
             // sendRequestToRobot(submitableBin, submitableProd);
+            setNewPotGCU(0);
         }
     }
 
@@ -439,7 +446,7 @@ function ManualEval(props: any) {
                     binName1 = j + String.fromCharCode(64 + i);
                 } else {
                     binName1 = j + String.fromCharCode(68 + i);
-                }                
+                }
                 let binsize: string = "";
                 let binsizeunits: string = "";
                 for (let k = 0; k < binInfoList.length; k++) {
@@ -500,8 +507,12 @@ function ManualEval(props: any) {
             podVol += rowVol;
             let tableRow: JSX.Element = <TableRow>{listOfItems}</TableRow>;
             listOfRows[count] = tableRow;
+
             count++;
         }
+        setCurrTotalObjVol(totalObjVol);
+        setCurrPodVol(podVol);
+
         setpodGCU(totalObjVol / podVol);
         let tableJSX: JSX.Element = <Table aria-label="a dense table">{listOfRows}</Table>;
         setTable1Actual(tableJSX);
@@ -522,6 +533,9 @@ function ManualEval(props: any) {
         if (submitableEvalName != "") {
             setEvalNameDisabled(true);
             setEvalNameError(false);
+            if (tableName != "") {
+                generateTable();
+            }
         } else {
             setEvalNameError(true);
         }
@@ -531,6 +545,9 @@ function ManualEval(props: any) {
         if (tableName != "") {
             setTableDisabled(true);
             setTableError(false);
+            if (submitableEvalName != "") {
+                generateTable();
+            }
         } else {
             setTableError(true);
         }
@@ -553,14 +570,17 @@ function ManualEval(props: any) {
         setSubmitableProd("");
         setSubmitableBin("");
         setBinErrorMsg("");
+        setWarningMsg("");
         setBinIdDisabled(true);
+        setNewPotGCU(0);
     }
 
     function onClickReset() {
         setSubmitMessage("");
         setisAsinError(false);
         setisBinError(false);
-        setBinErrorMsg("")
+        setBinErrorMsg("");
+        setWarningMsg("");
         setSubmitableProd("");
         setSubmitableBin("");
         setEvalNameDisabled(false);
@@ -571,10 +591,13 @@ function ManualEval(props: any) {
         setTableError(false);
         setTableDisabled(false);
         setpodGCU(0);
-        setMaxBinGCU("");
+        setMaxBinGCU("1");
         setMaxBinGCUDisabled(false);
         setMaxBinGCUError(false);
         setBinIdDisabled(true);
+        setNewPotGCU(0);
+        setCurrTotalObjVol(0);
+        setCurrPodVol(0);
     }
 
     function getGreenToRed(percent: number) {
@@ -625,155 +648,168 @@ function ManualEval(props: any) {
     }
 
     return (
-        <div id="overall">
-            <h1>Stow Handler</h1>
-            {isRobotMoving ?
-                <div id="topStuff">
-                    <p>The camera is taking a picture of the previously stowed object. Please wait...</p>
-                    {debug ? <Button onClick={onClickRecMessage}>Received Message</Button> : <br />}
-                </div> :
-                <div id="topStuff">
-                    <p style={{ "display": "inline", "marginLeft": "15px" }}>Step 1: </p><Button disabled={isConnected} style={{ "display": "inline" }} variant="contained" id="connectToBot" onClick={connectToRos}>Connect to Robot</Button>
-                    <div style={{ "display": "block", "margin": "15px" }}>
+        <div id="overall" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gridGap: 5 }}>
+            <div>
+                <h1>Stow Handler</h1>
+                {isRobotMoving ?
+                    <div>
+                        <p>The camera is taking a picture of the previously stowed object. Please wait...</p>
+                        {debug ? <Button onClick={onClickRecMessage}>Received Message</Button> : <br />}
+                    </div> :
+                    <div>
+                        <p style={{ "display": "inline", "marginLeft": "15px" }}>Step 1: </p><Button disabled={isConnected} style={{ "display": "inline" }} variant="contained" id="connectToBot" onClick={connectToRos}>Connect to Robot</Button>
+                        <div style={{ "display": "block", "margin": "15px" }}>
 
-                        <p >Step 2: </p>
-                        <FormControl id="evalName" error={evalNameError} variant="standard">
-                            <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
-                            <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
-                        </FormControl>
-                        <Button variant="outlined" color="success" id="itemBinButton" onClick={evalNameOnClick}>Submit Evaluation Name</Button>
-                    </div>
+                            <p >Step 2: </p>
+                            <FormControl id="evalName" error={evalNameError} variant="standard">
+                                <FormLabel component="legend">Enter Evaluation Name (must be unique):</FormLabel>
+                                <Input disabled={evalNameDisabled} error={evalNameError} onChange={(e) => setSubmitableEvalName(e.target.value)} value={submitableEvalName} id="evalNameForm" placeholder="Evaluation Name" />
+                            </FormControl>
+                            <Button variant="outlined" color="success" id="itemBinButton" onClick={evalNameOnClick}>Submit Evaluation Name</Button>
+                        </div>
 
-                    <div style={{ "display": "block", "margin": "15px" }}>
-                        <p >Step 3: </p>
-                        <FormControl error={tableError} disabled={tableDisabled}>
-                            <FormLabel component="legend">Pick a Pod</FormLabel>
-                            <RadioGroup value={tableName} row>
-                                <FormControlLabel
-                                    control={
-                                        <Radio onChange={(e) => setTableName("1Half")} value="1Half" name="1Half" />
-                                    }
-                                    label="Pod 1 (6-inch) Half"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Radio disabled onChange={(e) => setTableName("1")} value="1" name="1" />
-                                    }
-                                    label="Pod 1 (6-inch)"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Radio disabled onChange={(e) => setTableName("2")} value="2" name="2" />
-                                    }
-                                    label="Pod 2 (14-inch)"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox disabled name="3" />
-                                    }
-                                    label="Pod 3"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox disabled name="4" />
-                                    }
-                                    label="Pod 4"
-                                />
-                                <Button variant="outlined" color="success" onClick={tableNameOnClick}>Submit Pod Choice</Button>
-                            </RadioGroup>
-                        </FormControl>
-                    </div>
+                        <div style={{ "display": "block", "margin": "15px" }}>
+                            <p >Step 3: </p>
+                            <FormControl error={tableError} disabled={tableDisabled}>
+                                <FormLabel component="legend">Pick a Pod</FormLabel>
+                                <RadioGroup value={tableName} row>
+                                    <FormControlLabel
+                                        control={
+                                            <Radio onChange={(e) => setTableName("1Half")} value="1Half" name="1Half" />
+                                        }
+                                        label="Pod 1 (6-inch) Half"
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Radio disabled onChange={(e) => setTableName("1")} value="1" name="1" />
+                                        }
+                                        label="Pod 1 (6-inch)"
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Radio disabled onChange={(e) => setTableName("2")} value="2" name="2" />
+                                        }
+                                        label="Pod 2 (14-inch)"
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox disabled name="3" />
+                                        }
+                                        label="Pod 3"
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox disabled name="4" />
+                                        }
+                                        label="Pod 4"
+                                    />
+                                    <Button variant="outlined" color="success" onClick={tableNameOnClick}>Submit Pod Choice</Button>
+                                </RadioGroup>
+                            </FormControl>
+                        </div>
 
-                    <div style={{ "display": "block", "margin": "15px" }}>
-                        <p >Step 4: </p>
-                        <FormControl id="evalName" error={evalNameError} variant="standard">
-                            <FormLabel component="legend">Enter Maximum Bin GCU:</FormLabel>
-                            <Input disabled={maxBinGCUDisabled} error={maxBinGCUError} onChange={(e) => setMaxBinGCU(e.target.value)} value={maxBinGCU} placeholder="Max Bin GCU" />
-                        </FormControl>
-                        <Button variant="outlined" color="success" onClick={maxBinGCUButton}>Submit Max Bin GCU</Button>
-                    </div>
+                        <div style={{ "display": "block", "margin": "15px" }}>
+                            <p >Step 4: </p>
+                            <FormControl id="evalName" error={evalNameError} variant="standard">
+                                <FormLabel component="legend">Enter Maximum Bin GCU:</FormLabel>
+                                <Input disabled={maxBinGCUDisabled} error={maxBinGCUError} onChange={(e) => setMaxBinGCU(e.target.value)} value={maxBinGCU} placeholder="Max Bin GCU" />
+                            </FormControl>
+                            <Button variant="outlined" color="success" onClick={maxBinGCUButton}>Submit Max Bin GCU</Button>
+                        </div>
 
-                    {submitMessage != "" ? <p className="submitMessagebox">{submitMessage}</p> : <p></p>}
+                        {submitMessage != "" ? <p className="submitMessagebox">{submitMessage}</p> : <p></p>}
 
-                    {binErrorMsg != "" ? <p className="errorMsg">{binErrorMsg}</p> : <p></p>}
+                        {binErrorMsg != "" ? <p className="errorMsg">{binErrorMsg}</p> : <p></p>}
 
-                    <div style={{ "display": "block", "margin": "15px" }}>
-                        <p >Step 5: </p>
-                        <FormControl>
-                            <FormLabel id="demo-radio-buttons-group-label">Method of Input</FormLabel>
-                            <RadioGroup
-                                row
-                                aria-labelledby="demo-radio-buttons-group-label"
-                                defaultValue="Automatic"
-                                value={autoOrManual}
-                                name="radio-buttons-group"
-                                onChange={(e) => setAutoOrManual(e.target.value)}
-                            >
-                                <FormControlLabel value="Automatic" control={<Radio />} label="Automatic" />
-                                <FormControlLabel value="Manual" control={<Radio />} label="Manual" />
-                            </RadioGroup>
-                        </FormControl>
+                        {warningMsg != "" ? <p className="warningMsg">{warningMsg}</p> : <p></p>}
 
-                        {autoOrManual == "Automatic" ?
-                            <div id="leftForm">
-                                <FormLabel component="legend">Enter Automatically:</FormLabel>
-                                <FormControl id="itemInput" error={isASINError} variant="standard">
-                                    <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                    <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" autoFocus={true}/>
-                                </FormControl>
+                        <div style={{ "display": "block", "margin": "15px" }}>
+                            <p >Step 5: </p>
+                            <FormControl>
+                                <FormLabel id="demo-radio-buttons-group-label">Method of Input</FormLabel>
+                                <RadioGroup
+                                    row
+                                    aria-labelledby="demo-radio-buttons-group-label"
+                                    defaultValue="Automatic"
+                                    value={autoOrManual}
+                                    name="radio-buttons-group"
+                                    onChange={(e) => setAutoOrManual(e.target.value)}
+                                >
+                                    <FormControlLabel value="Automatic" control={<Radio />} label="Automatic" />
+                                    <FormControlLabel value="Manual" control={<Radio />} label="Manual" />
+                                </RadioGroup>
+                            </FormControl>
 
-                                <FormControl id="binInput" error={isBinError} variant="standard">
-                                    <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
-                                    <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
-                                </FormControl>
+                            {autoOrManual == "Automatic" ?
+                                <div id="leftForm">
+                                    <FormLabel component="legend">Enter Automatically:</FormLabel>
+                                    <FormControl id="itemInput" error={isASINError} variant="standard">
+                                        <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
+                                        <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" autoFocus={true} />
+                                    </FormControl>
 
-                                <div>
-                                    <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
-                                    <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
-                                    <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>
+                                    <FormControl id="binInput" error={isBinError} variant="standard">
+                                        <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
+                                        <Input inputRef={refBin} onChange={checkValidBin} error={isBinError} value={submitableBin} id="binid" placeholder="Bin Id" />
+                                    </FormControl>
+
+                                    <div>
+                                        <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
+                                        <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                                        <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>
+                                    </div>
+
+                                    <div>
+                                        <h3>New Pod GCU: {parseFloat(newPotGCU.toString()).toFixed(3)}</h3>
+                                    </div>
                                 </div>
-                            </div>
-                            :
-                            <div id="rightForm">
-                                <FormLabel component="legend">Enter Manually:</FormLabel>
-                                <FormControl id="itemInput" error={isASINError} variant="standard">
-                                    <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                    <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
-                                </FormControl>
+                                :
+                                <div id="rightForm">
+                                    <FormLabel component="legend">Enter Manually:</FormLabel>
+                                    <FormControl id="itemInput" error={isASINError} variant="standard">
+                                        <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
+                                        <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                                    </FormControl>
 
-                                <FormControl id="binInput" error={isBinError} variant="standard">
-                                    <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
-                                    <Input disabled={binIdDisabled} inputRef={refBin} onChange={checkValidBin} value={submitableBin} error={isBinError} id="binid" placeholder="Bin Id" />
-                                </FormControl>
-                                <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
+                                    <FormControl id="binInput" error={isBinError} variant="standard">
+                                        <InputLabel htmlFor="itemASIN">Bin Id</InputLabel>
+                                        <Input disabled={binIdDisabled} inputRef={refBin} onChange={checkValidBin} value={submitableBin} error={isBinError} id="binid" placeholder="Bin Id" />
+                                    </FormControl>
+                                    <Button variant="outlined" color="success" id="itemBinButton" onClick={submitOnClick}>Add Item</Button>
 
-                                <div>
+                                    <div>
+                                        <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
+                                        <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
+                                        <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>
+                                    </div>
 
-                                    <Button variant="contained" id="submitEvalButton" color="warning" style={{ "display": "inline", "margin": "10px" }} onClick={onClickUndo}>Undo</Button>
-                                    <Button variant="contained" id="submitEvalButton" color="error" style={{ "display": "inline", "margin": "10px" }} onClick={onClickReset}>Reset</Button>
-                                    <Button variant="contained" id="submitEvalButton" style={{ "display": "inline", "margin": "10px" }} onClick={onClickTakePhoto}>Done Completely</Button>
+                                    <div>
+                                        <h3>New Pod GCU: {parseFloat(newPotGCU.toString()).toFixed(3)}</h3>
+                                    </div>
                                 </div>
-                            </div>
-                        }
+                            }
 
+                        </div>
+
+                        <p style={{ "color": "red", "borderStyle": "solid", "display": "inline", "padding": "10px", "borderRadius": "5px" }}>Remember your evaluation name: {submitableEvalName}</p>
                     </div>
-
-                    <p style={{ "color": "red" }}>Remember your evaluation name: {submitableEvalName}</p>
-                </div>
-            }
-            <FormGroup row style={{ "marginTop": "20px" }}>
-                <LoadingButton
-                    loading={loading}
-                    loadingPosition="start"
-                    startIcon={<SaveIcon />}
-                    variant="outlined"
-                    onClick={() => generateTable()}
-                >
-                    Generate
-                </LoadingButton>
-            </FormGroup>
-            <h3>Pod GCU: {parseFloat(podGCU.toString()).toFixed(3)}</h3>
-            {table1Actual}
+                }
+            </div>
+            <div>
+                <FormGroup row style={{ "marginTop": "20px" }}>
+                    <LoadingButton
+                        loading={loading}
+                        loadingPosition="start"
+                        startIcon={<SaveIcon />}
+                        variant="outlined"
+                        onClick={() => generateTable()}
+                    >
+                        Generate
+                    </LoadingButton>
+                </FormGroup>
+                <h3>Pod GCU: {parseFloat(podGCU.toString()).toFixed(3)}</h3>
+                {table1Actual}
+            </div>
         </div>
 
     )

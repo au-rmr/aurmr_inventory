@@ -28,7 +28,7 @@ interface TableObject {
 }
 
 function PickHandler(props: PickHandlerProps) {
-    const debug = false;
+    const debug = true;
 
     const [evalTextArea, setEvalTextArea] = useState<string>("");
     const [pickTextArea, setPickTextArea] = useState<string>("");
@@ -53,33 +53,6 @@ function PickHandler(props: PickHandlerProps) {
 
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
-    function connectToRos() {
-        let ros: any;
-        ros = new ROSLIB.Ros({
-            url: 'ws://control:9090'
-        });
-
-        ros.on('connection', function () {
-            console.log('Connected to websocket server.');
-            setIsConnected(true);
-        });
-
-        ros.on('error', function (error: any) {
-            console.log('Error connecting to websocket server: ', error);
-            setIsConnected(false);
-        });
-
-        ros.on('close', function () {
-            console.log('Connection to websocket server closed.');
-            setIsConnected(false);
-        });
-
-        setRobotServiceClient(new ROSLIB.Service({
-            ros: ros,
-            name: "aurmr_demo/multiple_pick",
-            serviceType: "/aurmr_tasks/MultiplePickRequest"
-        }));
-    }
 
     async function onSubmit() {
         let objects: TableObject[] = [];
@@ -93,10 +66,10 @@ function PickHandler(props: PickHandlerProps) {
 
                 <TableHead>
                     <TableRow>
-                        <TableCell>Product Name</TableCell>
-                        <TableCell align="right">ASIN</TableCell>
-                        <TableCell align="right">Bin Name</TableCell>
-                        <TableCell align="right">Product Bin ID</TableCell>
+                        <TableCell><strong>Product Name</strong></TableCell>
+                        <TableCell align="right"><strong>ASIN</strong></TableCell>
+                        <TableCell align="right"><strong>Bin Name</strong></TableCell>
+                        <TableCell align="right"><strong>Product Bin ID</strong></TableCell>
                     </TableRow>
                 </TableHead>
             setTableToDisplay(current => [...current, initialHeader]);
@@ -136,12 +109,7 @@ function PickHandler(props: PickHandlerProps) {
 
                             bin_ids.push(objects[objects.length - 1]["binName"]);
                             object_ids.push("" + objects[objects.length - 1]["productBinId"] + "")
-                            // sendRequestToRobot(objects[objects.length - 1]["binName"], objects[objects.length - 1]["productBinId"])
-                            //var request = new ROSLIB.ServiceRequest({
-                            //    bin_id: objects[objects.length - 1]["binName"],
-                            //    object_id: "" + objects[objects.length - 1]["productBinId"] + ""
-                            //});
-                            //listOfRequests.push(request);
+
                             setIsRobotMoving(true);
                             break;
                         }
@@ -152,10 +120,6 @@ function PickHandler(props: PickHandlerProps) {
             }
             if (!debug) {
                 let startTime = Date.now();
-
-
-
-
                 var request = new ROSLIB.ServiceRequest({
                     bin_ids: bin_ids,
                     object_ids: object_ids
@@ -209,7 +173,7 @@ function PickHandler(props: PickHandlerProps) {
         console.log(getProdsFromEval);
         let csvContent = "data:text/csv;charset=utf-8,";
         for (let i = 0; i < getProdsFromEval.data.getProdBinsFromEvalName.length; i++) {
-            allProdsToDownload.push(getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.asin + ", " + getProdsFromEval.data.getProdBinsFromEvalName[i].bin.BinName + ", " + getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.name) ;
+            allProdsToDownload.push(getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.asin + ", " + getProdsFromEval.data.getProdBinsFromEvalName[i].bin.BinName + ", " + getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.name);
         }
 
         for (let j = 0; j < allProdsToDownload.length; j++) {
@@ -223,83 +187,86 @@ function PickHandler(props: PickHandlerProps) {
     }
 
     return (
-        <>
-            <div id="left-content">
-                {/* <Button onClick={connectToRos}>Connect to Robot</Button> */}
-
+        <div style={{ "padding": "50px", display: "grid", gridTemplateColumns: "25% 75%", gridGap: 10 }}>
+            <div>
+                <h1>Pick Handler</h1>
                 {isRobotMoving
                     ? <div> <p>Robot is executing the Picks. Please wait...</p>  {debug
                         ? <Button onClick={() => setIsRobotMoving(false)}>Done Moving</Button>
                         : <br />}
                     </div>
-                    : <br />}
-                <div id="heading-text">Evaluation Name</div>
-                <textarea
-                    id="pick-text-area"
-                    onChange={(event) => setEvalTextArea(event.target.value)}
-                    onKeyPress={e => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            onSubmit();
-                        }
-                    }}
-                    value={evalTextArea}
-                /> <br />
-                <Button onClick={clickDownload}>Download</Button>
-                <div id="heading-text">Upload File</div>
-                <CSVReader
-                    onUploadAccepted={(results: any) => {
-                        setUploadedData(results.data)
-                    }}
-                >
-                    {({
-                        getRootProps,
-                        acceptedFile,
-                        ProgressBar,
-                        getRemoveFileProps
-                    }: any) => (
-                        <>
-                            <div>
-                                <Button id="pick-button" variant="outlined" onClick={onSubmit} {...getRootProps()}>
-                                    Browse
-                                </Button>
-                                <div id="text">
-                                    {acceptedFile && acceptedFile.name}
-                                </div>
-                                <Button id="pick-button" variant="outlined" color="error" {...getRemoveFileProps()}>
-                                    Remove
-                                </Button>
-                            </div>
-                            <ProgressBar />
-                        </>
-                    )}
-                </CSVReader>
-                <br />
-
-                <Button id="pick-button" variant="contained" color="success" onClick={onSubmit}>Submit</Button>
-
-            </div>
-
-            <div id="left-content">
-                <div id="heading-text">Pick Info</div>
-            </div>
-            {/* 
-            <ObjectTable objectList={picks} /> */}
-            <TableContainer id="table" component={Paper}>
-                <Table>
-                    {tableToDisplay}
-                </Table>
-            </TableContainer>
-
-            <div id="left-content">
-                <div id="heading-text">Error ASINs</div>
-                {
-                    errorObjects && errorObjects.map((value, index) => {
-                        return (<div key={index} id="text">{value}</div>)
-                    })
+                    : <br />
                 }
+                <div style={{ "margin": "25px", "marginTop": "0px" }}>
+                    Step 1: <div id="heading-text">Evaluation Name</div>
+                    <textarea
+                        id="pick-text-area"
+                        onChange={(event) => setEvalTextArea(event.target.value)}
+                        onKeyPress={e => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                onSubmit();
+                            }
+                        }}
+                        value={evalTextArea}
+                    /> <br />
+                    <Button variant="contained" onClick={clickDownload}>Download</Button>
+                </div>
+                <div style={{ "margin": "25px" }}>
+                    Step 2: <div id="heading-text">Upload File</div>
+                    <CSVReader
+                        onUploadAccepted={(results: any) => {
+                            setUploadedData(results.data)
+                        }}
+                    >
+                        {({
+                            getRootProps,
+                            acceptedFile,
+                            ProgressBar,
+                            getRemoveFileProps
+                        }: any) => (
+                            <>
+                                <div>
+                                    <Button id="pick-button" variant="outlined" style={{ "display": "inline" }} onClick={onSubmit} {...getRootProps()}>
+                                        Browse
+                                    </Button>
+                                    <div id="text">
+                                        {acceptedFile && acceptedFile.name}
+                                    </div>
+                                    <Button id="pick-button" variant="outlined" style={{ "display": "inline" }} color="error" {...getRemoveFileProps()}>
+                                        Remove
+                                    </Button>
+                                </div>
+                                <ProgressBar />
+                            </>
+                        )}
+                    </CSVReader>
+                    <br />
+                    Step 3:
+                    <Button style={{ "marginLeft": "10px" }} id="pick-button" variant="contained" color="success" onClick={onSubmit}>Submit</Button>
+                </div>
             </div>
-        </>
+
+            <div>
+                <div>
+                    <div id="heading-text">Pick Info</div>
+                    <TableContainer id="table" component={Paper}>
+                        <Table size="small"> 
+                            {tableToDisplay}
+                        </Table>
+                    </TableContainer>
+                </div>
+
+                <div style={{ "marginTop": "20px" }}>
+                    <div id="heading-text">Error ASINs</div>
+                    {
+                        errorObjects && errorObjects.map((value, index) => {
+                            return (<div key={index} id="text">{value}</div>)
+                        })
+                    }
+                </div>
+            </div>
+        </div>
     );
 }
 
