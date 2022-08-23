@@ -1,8 +1,8 @@
 import './../styles/App.css';
 import { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
-import { Button } from '@mui/material';
-import { GET_PROD_BIN_IDS, GET_PICKS_FROM_PROD_BIN_IDS, GET_PROD_FROM_EVAL } from '../GraphQLQueriesMuts/Query';
+import { Button, Paper, TableContainer, TableHead } from '@mui/material';
+import { GET_PROD_BIN_IDS, GET_PICKS_FROM_PROD_BIN_IDS, GET_PROD_FROM_EVAL, GET_PRODBINID_FROM_EVALNAME } from '../GraphQLQueriesMuts/Query';
 import { ADD_PICK_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { GET_BIN_FROM_BINID } from '../GraphQLQueriesMuts/Query';
 import { EDIT_PICK_OUTCOME_TIME } from '../GraphQLQueriesMuts/Mutation';
@@ -49,6 +49,7 @@ function PickHandler(props: PickHandlerProps) {
     const { data: OneBinData, loading: OneBinLoading, error: OneBinError, refetch: OneBinRefetch } = useQuery(GET_BIN_FROM_BINID);
     const [add_pick] = useMutation(ADD_PICK_FOR_AN_EVAL);
     const [edit_pick] = useMutation(EDIT_PICK_OUTCOME_TIME);
+    const { refetch: getItemsFromEval } = useQuery(GET_PRODBINID_FROM_EVALNAME);
 
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -88,6 +89,17 @@ function PickHandler(props: PickHandlerProps) {
             let bin_ids: string[] = [];
             let object_ids: string[] = [];
 
+            let initialHeader: JSX.Element =
+
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Product Name</TableCell>
+                        <TableCell align="right">ASIN</TableCell>
+                        <TableCell align="right">Bin Name</TableCell>
+                        <TableCell align="right">Product Bin ID</TableCell>
+                    </TableRow>
+                </TableHead>
+            setTableToDisplay(current => [...current, initialHeader]);
             for (let i = 0; i < uploadedData.length; i++) {
                 const asinValue = uploadedData[i][0];
                 console.log(asinValue)
@@ -191,6 +203,25 @@ function PickHandler(props: PickHandlerProps) {
         }
     }
 
+    async function clickDownload() {
+        let getProdsFromEval = await getItemsFromEval({ evalName: evalTextArea });
+        let allProdsToDownload = [];
+        console.log(getProdsFromEval);
+        let csvContent = "data:text/csv;charset=utf-8,";
+        for (let i = 0; i < getProdsFromEval.data.getProdBinsFromEvalName.length; i++) {
+            allProdsToDownload.push(getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.asin + ", " + getProdsFromEval.data.getProdBinsFromEvalName[i].bin.BinName + ", " + getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.name) ;
+        }
+
+        for (let j = 0; j < allProdsToDownload.length; j++) {
+            csvContent += allProdsToDownload[j];
+            csvContent += "\n";
+        }
+
+        console.log(allProdsToDownload);
+        var encodedUri = encodeURI(csvContent);
+        window.open(encodedUri);
+    }
+
     return (
         <>
             <div id="left-content">
@@ -202,7 +233,19 @@ function PickHandler(props: PickHandlerProps) {
                         : <br />}
                     </div>
                     : <br />}
-
+                <div id="heading-text">Evaluation Name</div>
+                <textarea
+                    id="pick-text-area"
+                    onChange={(event) => setEvalTextArea(event.target.value)}
+                    onKeyPress={e => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            onSubmit();
+                        }
+                    }}
+                    value={evalTextArea}
+                /> <br />
+                <Button onClick={clickDownload}>Download</Button>
                 <div id="heading-text">Upload File</div>
                 <CSVReader
                     onUploadAccepted={(results: any) => {
@@ -232,18 +275,6 @@ function PickHandler(props: PickHandlerProps) {
                     )}
                 </CSVReader>
                 <br />
-                <div id="heading-text">Evaluation Name</div>
-                <textarea
-                    id="pick-text-area"
-                    onChange={(event) => setEvalTextArea(event.target.value)}
-                    onKeyPress={e => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            onSubmit();
-                        }
-                    }}
-                    value={evalTextArea}
-                /> <br />
 
                 <Button id="pick-button" variant="contained" color="success" onClick={onSubmit}>Submit</Button>
 
@@ -252,11 +283,13 @@ function PickHandler(props: PickHandlerProps) {
             <div id="left-content">
                 <div id="heading-text">Pick Info</div>
             </div>
-
-            <ObjectTable objectList={picks} />
-            <Table>
-                {tableToDisplay}
-            </Table>
+            {/* 
+            <ObjectTable objectList={picks} /> */}
+            <TableContainer id="table" component={Paper}>
+                <Table>
+                    {tableToDisplay}
+                </Table>
+            </TableContainer>
 
             <div id="left-content">
                 <div id="heading-text">Error ASINs</div>

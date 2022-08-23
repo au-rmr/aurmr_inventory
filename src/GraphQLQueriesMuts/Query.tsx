@@ -297,6 +297,10 @@ export const GET_PRODBINID_FROM_EVALNAME = gql `
 query getProdBinFromEval($evalName:String!) {
   getProdBinsFromEvalName(evalName:$evalName) {
     id
+    amazonProduct {
+      name
+      asin
+    }
     bin {
       BinName
     }
