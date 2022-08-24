@@ -642,6 +642,7 @@ function ManualEval(props: any) {
         let previousObjectQuery = await OneProdBinRefetch({ evalName: submitableEvalName });
         console.log(previousObjectQuery);
         let prevObj = previousObjectQuery.data.getProdBinsFromEvalName;
+        setIsPhotoTaken(true);
         sendRequestToRobot(prevObj[prevObj.length - 1].bin.BinName, prevObj[prevObj.length - 1].id);
 
     }

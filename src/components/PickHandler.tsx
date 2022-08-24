@@ -46,6 +46,7 @@ function PickHandler(props: PickHandlerProps) {
         </TableHead>
     ]);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
+    const [pickingMsg, setPickingMsg] = useState<any>("");
 
     let pickId = "";
 
@@ -167,12 +168,17 @@ function PickHandler(props: PickHandlerProps) {
                 var listener = new ROSLIB.Topic({
                     ros: ros,
                     name: '/demo_status',
-                    messageType: 'std_msgs/String'
+                    messageType: 'aurmr_tasks/PickStatus'
                 });
         
-                listener.subscribe(function (message) {
+                listener.subscribe(async function (message: any) {
                     console.log(message);
-                    // listener.unsubscribe();
+                    setPickingMsg(message);
+                    let pick = await picksFromProdBinRefetch({ProductBinId: parseInt(message.object_id)});
+                    let pickId = pick.data.getPicksFromProductBin[0].id;
+                    if (message.status != "picking") {
+                        await edit_pick({variables: {id: parseInt(pickId), outcome: message.status == "item_detected", time: parseFloat(message.time)}});
+                    }
                 });
 
             }
@@ -284,6 +290,7 @@ function PickHandler(props: PickHandlerProps) {
             </div>
 
             <div>
+                <h3>{pickingMsg.status} ProdBinId: {pickingMsg.object_id}</h3>
                 <div>
                     <div id="heading-text">Pick Info</div>
                     <TableContainer id="table" component={Paper}>

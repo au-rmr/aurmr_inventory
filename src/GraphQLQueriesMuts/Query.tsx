@@ -274,6 +274,7 @@ export const GET_PICKS_FROM_PROD_BIN_IDS = gql`
             ProductBinId: $ProductBinId
         ){
             ProductBinId
+            id
         }
     }
 `
