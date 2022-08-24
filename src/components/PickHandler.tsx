@@ -38,6 +38,7 @@ function PickHandler(props: PickHandlerProps) {
     const [tableToDisplay, setTableToDisplay] = useState<JSX.Element[]>([
         <TableHead>
             <TableRow>
+                <TableCell><strong>Index</strong></TableCell>
                 <TableCell><strong>Product Name</strong></TableCell>
                 <TableCell align="right"><strong>ASIN</strong></TableCell>
                 <TableCell align="right"><strong>Bin Name</strong></TableCell>
@@ -72,7 +73,7 @@ function PickHandler(props: PickHandlerProps) {
         if (uploadedData && evalTextArea) {
             let bin_ids: string[] = [];
             let object_ids: string[] = [];
-
+            let count2 = 0;
             for (let i = 0; i < uploadedData.length; i++) {
                 const asinValue = uploadedData[i][0];
                 console.log(asinValue)
@@ -98,8 +99,10 @@ function PickHandler(props: PickHandlerProps) {
                                 console.log(addedPick);
                                 pickId = addedPick.data.addPickWithOnlyProdBin.id;
                                 console.log(pickId)
+                                count2++;
                                 let tablecell: JSX.Element =
                                     <TableRow>
+                                        <TableCell>{count2}</TableCell>
                                         <TableCell>{objects[objects.length - 1]["productName"]}</TableCell>
                                         <TableCell>{objects[objects.length - 1]["asin"]}</TableCell>
                                         <TableCell>{objects[objects.length - 1]["binName"]}</TableCell>
@@ -171,16 +174,16 @@ function PickHandler(props: PickHandlerProps) {
                     name: '/demo_status',
                     messageType: 'aurmr_tasks/PickStatus'
                 });
-        
+
                 listener.subscribe(async function (message: any) {
                     console.log(message);
                     setPickingMsg(message);
-                    let pick = await picksFromProdBinRefetch({ProductBinId: parseInt(message.object_id)});
+                    let pick = await picksFromProdBinRefetch({ ProductBinId: parseInt(message.object_id) });
                     console.log(pick)
                     let pickId = pick.data.getPicksFromProductBin[0].id;
                     setPickingName(pick.data.getPicksFromProductBin[0].ProductFromBin.amazonProduct.name);
                     if (message.status != "picking") {
-                        await edit_pick({variables: {id: parseInt(pickId), outcome: message.status == "item_detected", time: parseFloat(message.time)}});
+                        await edit_pick({ variables: { id: parseInt(pickId), outcome: message.status == "item_detected", time: parseFloat(message.time) } });
                     }
                 });
 
@@ -209,7 +212,7 @@ function PickHandler(props: PickHandlerProps) {
     //         setIsConnected(false);
     //     });
 
-        
+
     // }
 
     async function clickDownload() {

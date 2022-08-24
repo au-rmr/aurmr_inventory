@@ -19,7 +19,8 @@ def parse_csv(csv_file, output):
 
     df = df.groupby('bin').sample(n=1)
     #df = df.groupby('bin').sample(frac=1)
-    #df = df.sample(frac=1)
+
+    df = df.sample(frac=1)
 
     df.to_csv(output, header=False, index=False)
 
