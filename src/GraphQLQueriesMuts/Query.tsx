@@ -269,14 +269,19 @@ export const GET_PROD_BIN_IDS = gql`
 `
 
 export const GET_PICKS_FROM_PROD_BIN_IDS = gql`
-    query getPicks($ProductBinId: Int!) {
-        getPicksFromProductBin(
-            ProductBinId: $ProductBinId
-        ){
-            ProductBinId
-            id
-        }
-    }
+query getPicks($ProductBinId: Int!) {
+  getPicksFromProductBin(
+      ProductBinId: $ProductBinId
+  ){
+      ProductBinId
+      id
+ProductFromBin {
+amazonProduct {
+  name
+}
+}
+  }
+}
 `
 
 export const GET_PROD_FROM_EVAL = gql`

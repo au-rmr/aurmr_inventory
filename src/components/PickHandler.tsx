@@ -47,6 +47,7 @@ function PickHandler(props: PickHandlerProps) {
     ]);
     const [isRobotMoving, setIsRobotMoving] = useState<boolean>(false);
     const [pickingMsg, setPickingMsg] = useState<any>("");
+    const [pickingName, setPickingName] = useState<string>("");
 
     let pickId = "";
 
@@ -175,7 +176,9 @@ function PickHandler(props: PickHandlerProps) {
                     console.log(message);
                     setPickingMsg(message);
                     let pick = await picksFromProdBinRefetch({ProductBinId: parseInt(message.object_id)});
+                    console.log(pick)
                     let pickId = pick.data.getPicksFromProductBin[0].id;
+                    setPickingName(pick.data.getPicksFromProductBin[0].ProductFromBin.amazonProduct.name);
                     if (message.status != "picking") {
                         await edit_pick({variables: {id: parseInt(pickId), outcome: message.status == "item_detected", time: parseFloat(message.time)}});
                     }
@@ -290,7 +293,7 @@ function PickHandler(props: PickHandlerProps) {
             </div>
 
             <div>
-                <h3>{pickingMsg.status} ProdBinId: {pickingMsg.object_id}</h3>
+                <h3>{pickingMsg.status} -- ProdBinId: {pickingMsg.object_id} -- Product Name: {pickingName}</h3>
                 <div>
                     <div id="heading-text">Pick Info</div>
                     <TableContainer id="table" component={Paper}>

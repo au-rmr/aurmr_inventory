@@ -280,7 +280,8 @@ module.exports = {
                                 select: {
                                     BinName: true
                                 }
-                            }
+                            }, 
+                            amazonProduct: true
                         }
                     }
                 }
