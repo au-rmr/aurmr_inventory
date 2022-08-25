@@ -7,7 +7,6 @@ import { ADD_PICK_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
 import { GET_BIN_FROM_BINID } from '../GraphQLQueriesMuts/Query';
 import { EDIT_PICK_OUTCOME_TIME } from '../GraphQLQueriesMuts/Mutation';
 import { useCSVReader } from 'react-papaparse';
-import ObjectTable from './ObjectTable';
 
 import Table from '@mui/material/Table';
 import TableRow from '@mui/material/TableRow';
@@ -20,20 +19,11 @@ import { BorderInnerSharp } from '@mui/icons-material';
 interface PickHandlerProps {
 }
 
-interface TableObject {
-    asin: string,
-    productName: string,
-    productBinId: any,
-    binName: string,
-}
-
 function PickHandler(props: PickHandlerProps) {
     const debug = false;
 
     const [evalTextArea, setEvalTextArea] = useState<string>("");
-    const [pickTextArea, setPickTextArea] = useState<string>("");
     const [uploadedData, setUploadedData] = useState<string[]>();
-    const [picks, setPicks] = useState<TableObject[]>([]);
     const [errorObjects, setErrorObjects] = useState<string[]>([]);
     const [tableToDisplay, setTableToDisplay] = useState<JSX.Element[]>([
         <TableHead>
@@ -67,8 +57,7 @@ function PickHandler(props: PickHandlerProps) {
     const [isConnected, setIsConnected] = useState<boolean>(false);
 
     async function onSubmit() {
-        let objects: TableObject[] = [];
-        setPicks([]);
+        let objects: any[] = [];
         setErrorObjects([]);
         if (uploadedData && evalTextArea) {
             let bin_ids: string[] = [];

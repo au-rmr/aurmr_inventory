@@ -25,9 +25,9 @@ function Table(props:TableProps) {
         return output;
     }
 
-    const handleSave = () => {
-        props.onChange(textArea);
-    }
+    // const handleSave = () => {
+    //     // TODO: add implementation
+    // }
 
     return (
         <>
@@ -39,7 +39,7 @@ function Table(props:TableProps) {
             />
             <br/>
 
-            <button id="button" onClick={handleSave}>Save</button>
+            {/* <button id="button" onClick={handleSave}>Save</button> */}
             <div id="" dangerouslySetInnerHTML={{__html:  makeTable()}}/>
         </>
     );

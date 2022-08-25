@@ -8,7 +8,6 @@ import {
 import Evaluator from './Evaluator';
 import ManualEval from './ManualEval';
 import ManualEval2 from './ManualEval2';
-import PickHandler2 from './PickHandler2';
 import Home from './Home';
 import EditBin from './EditBin';
 import PickHandler from './PickHandler';
@@ -55,9 +54,6 @@ function App() {
           <NavLink to="/pickhandler">
             <li>Pick Handler</li>
           </NavLink>
-          {/* <NavLink to="/pickhandler2">
-            <li>Pick Handler 2</li>
-          </NavLink> */}
       </NavUnlisted>
       <Routes>
         {/* <Route path="/" element={<Home />} /> */}
@@ -66,7 +62,6 @@ function App() {
         <Route path="/manualevaluation2" element={<ManualEval2 />} />
         <Route path="/manualevaluation/editBin/:binId" element={<EditBin />} />
         <Route path="/pickhandler" element={<PickHandler />} />
-        <Route path="/pickhandler2" element={<PickHandler2 />} />
       </Routes>
     </Router>
   );
