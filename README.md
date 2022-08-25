@@ -121,9 +121,6 @@ model Evaluation {
 }
 ```
 
-## Queries and Mutations Outline
-Coming Soon...
-
 ## How to query and mutate the database from Python?
 You can find some example scripts that was used for interacting with the database [here](https://github.com/au-rmr/aurmr_inventory/tree/main/DatabaseScripts).
 * [`AddBin`](https://github.com/au-rmr/aurmr_inventory/blob/main/DatabaseScripts/addBin.py) -> Provide a csv file with bins and its sizes use AddBin script to add them to the database. 
