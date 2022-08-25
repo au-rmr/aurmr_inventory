@@ -126,3 +126,20 @@ Coming Soon...
 
 ## How to query the database from Python?
 Coming Soon...
+
+## File System Outline
+### Backend
+In the [`server`](https://github.com/au-rmr/aurmr_inventory/tree/main/server) folder, inside the `src` folder, there is `schema.graphql`, which has all the queries, mutations, and models (as defined #Schema Outline). So, if you want to add a query or a mutation (to edit the database), then you will need to define that in either `type Query` or `type Mutation` first. 
+
+Then, in the `server/src` folder, there is `resolvers.js`. After defining the queries and mutations in the schema.graphql, you will need to say what those queries and mutations should do in-terms of interacting with the database. For this, you will need to define the functionalities in the resolvers. 
+
+Finally, in the  `server/prisma/schema.prisma`, you can define the tables for the database side. If you were to add more tables or more columns to existing tables, then you will need to edit it here first and then add the same to schema.graphql. 
+
+### Frontend
+In the [`src`](https://github.com/au-rmr/aurmr_inventory/tree/main/src), inside the `components` folder, the important ones are the following: 
+* `ManualEval.tsx` -> Frontend for handling the stowing process. 
+* `PickHandler.tsx` -> Frontend for handling the picking process. 
+
+In the [`src`](https://github.com/au-rmr/aurmr_inventory/tree/main/src), inside the `GraphQLQueriesMuts` folder, the important ones are the following:
+* `Query.tsx` -> All the queries that are used for Stowing and Picking
+* `Mutation.tsx` -> All the mutations that are used for Stowing and Picking
