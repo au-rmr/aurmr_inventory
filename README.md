@@ -124,8 +124,11 @@ model Evaluation {
 ## Queries and Mutations Outline
 Coming Soon...
 
-## How to query the database from Python?
-Coming Soon...
+## How to query and mutate the database from Python?
+You can find some example scripts that was used for interacting with the database [here](https://github.com/au-rmr/aurmr_inventory/tree/main/DatabaseScripts).
+* [`AddBin`](https://github.com/au-rmr/aurmr_inventory/blob/main/DatabaseScripts/addBin.py) -> Provide a csv file with bins and its sizes use AddBin script to add them to the database. 
+* [`AddProd`](https://github.com/au-rmr/aurmr_inventory/blob/main/DatabaseScripts/addProd.py) -> Provide a csv file with products and its details and use the AddProd scrpt to add them to the database.
+* [`getProductDetailsScrape_Updated`](https://github.com/au-rmr/aurmr_inventory/blob/main/DatabaseScripts/getProductDetailsScrape_Updated.py) -> Provide a csv with amazon product links and scrape the web to get the product details. Make sure the time for each scrape query is spaced out by at least 2 minutes. 
 
 ## File System Outline
 ### Backend
