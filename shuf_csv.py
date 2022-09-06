@@ -9,15 +9,20 @@ import pandas as pd
 
 @click.command()
 @click.option('--csv-file', default='~/Downloads/', cls=FilePathOption)
-@click.option('--output', default='/tmp/shuffled_items.csv', cls=FilePathOption)
-def parse_csv(csv_file, output):
+@click.option('--output', default='~/Downloads/shuffled_items.csv', cls=FilePathOption)
+@click.option('--num-items', default=1,  prompt='Number of items to select in each bin.')
+def parse_csv(csv_file, output, num_items):
     print(f'Reading {csv_file}')
     print(f'Output will be {output}')
+    print(f'Selecting {num_items} out of each bin')
     names = ['object', 'bin', 'description']
     df = pd.read_csv(csv_file, names = names, dtype=dict(zip(names, ['str', 'str', 'str'])))
     print(df.describe())
 
-    df = df.groupby('bin').sample(n=1)
+    if num_items > 0:
+        df = df.groupby('bin').sample(n=num_items)
+    else:
+        print('Selecting all items in each bin')
     #df = df.groupby('bin').sample(frac=1)
 
     df = df.sample(frac=1)
