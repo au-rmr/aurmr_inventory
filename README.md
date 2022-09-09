@@ -121,8 +121,26 @@ model Evaluation {
 }
 ```
 
-## Queries and Mutations Outline
-Coming Soon...
+## How to query and mutate the database from Python?
+You can find some example scripts that was used for interacting with the database [here](https://github.com/au-rmr/aurmr_inventory/tree/main/DatabaseScripts).
+* [`AddBin`](https://github.com/au-rmr/aurmr_inventory/blob/main/DatabaseScripts/addBin.py) -> Provide a csv file with bins and its sizes use AddBin script to add them to the database. 
+* [`AddProd`](https://github.com/au-rmr/aurmr_inventory/blob/main/DatabaseScripts/addProd.py) -> Provide a csv file with products and its details and use the AddProd scrpt to add them to the database.
+* [`getProductDetailsScrape_Updated`](https://github.com/au-rmr/aurmr_inventory/blob/main/DatabaseScripts/getProductDetailsScrape_Updated.py) -> Provide a csv with amazon product links and scrape the web to get the product details. Make sure the time for each scrape query is spaced out by at least 2 minutes. 
 
-## How to query the database from Python?
-Coming Soon...
+## File System Outline
+### Backend
+In the [`server`](https://github.com/au-rmr/aurmr_inventory/tree/main/server) folder, inside the `src` folder, there is `schema.graphql`, which has all the queries, mutations, and models (as defined #Schema Outline). So, if you want to add a query or a mutation (to edit the database), then you will need to define that in either `type Query` or `type Mutation` first. 
+
+Then, in the `server/src` folder, there is `resolvers.js`. After defining the queries and mutations in the schema.graphql, you will need to say what those queries and mutations should do in-terms of interacting with the database. For this, you will need to define the functionalities in the resolvers. 
+
+Finally, in the  `server/prisma/schema.prisma`, you can define the tables for the database side. If you were to add more tables or more columns to existing tables, then you will need to edit it here first and then add the same to schema.graphql. 
+
+### Frontend
+In the [`src`](https://github.com/au-rmr/aurmr_inventory/tree/main/src), inside the `components` folder, the important ones are the following: 
+* `ManualEval.tsx` -> Frontend for handling the stowing process. 
+* `PickHandler.tsx` -> Frontend for handling the picking process. 
+* `Evaluator.tsx` -> Frontend for random generation of product configurations in bins. Not currently in use but could be built on for future use.
+
+In the [`src`](https://github.com/au-rmr/aurmr_inventory/tree/main/src), inside the `GraphQLQueriesMuts` folder, the important ones are the following:
+* `Query.tsx` -> All the queries that are used for Stowing and Picking
+* `Mutation.tsx` -> All the mutations that are used for Stowing and Picking
