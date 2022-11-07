@@ -9,7 +9,12 @@
 4. Now, perform `yarn install`. This is to make sure all the `yarn` packages are installed into your local project. 
 5. Then, change directory into `server`, which you can do by running `cd server`. 
 6. Now, perform `yarn install` again inside the `server` folder to make sure to install necessary modules inside this folder. 
-7. This should set-up your project on the local machine. You can now change directory by going back one level. You can do this by performing `cd ..`. Then, you should be able to run `yarn start` and a reactapp should get started on your web browser. 
+7. This should set-up your project on the local machine. You can now change directory by going back one level. You can do this by performing `cd ..`. Then, you should be able to run `yarn start` and a reactapp should get started on your web browser. (If you get an error see note below)
+
+> NOTE: If you get an error which mentions `Attempting to bind to HOST environment variable: x86_64-conda-linux-gnu`,
+> it means that the `HOST` env variable needs to be set. For testing run `HOST=localhost` in the current shell before `yarn start` to run the server locally, otherwise
+> `HOST` should be set to `aurmr-control` (assuming you're on the `aurmr-control` workstation) so that other things can find
+> the server.
 
 ## How to start graphql playground? 
 For Your Information: graphql playground is something that runs on `localhost:4000` that provides a space for you to write and test out queries and mutations before making it official and adding it to your app. It also provides you a nice UI that prompts you suggestions when writing your queries and mutations. To get this working, please follow the steps below.
