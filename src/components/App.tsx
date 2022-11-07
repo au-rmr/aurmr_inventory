@@ -6,7 +6,7 @@ import {
   Route,
 } from "react-router-dom";
 import Evaluator from './Evaluator';
-import ManualEval from './ManualEval';
+import StowHandler from './StowHandler';
 import ManualEval2 from './ManualEval2';
 import Home from './Home';
 import EditBin from './EditBin';
@@ -58,7 +58,7 @@ function App() {
       <Routes>
         {/* <Route path="/" element={<Home />} /> */}
         <Route path="/evaluator" element={<div id="main"><Evaluator /></div>} />
-        <Route path="/" element={<ManualEval />} />
+        <Route path="/" element={<StowHandler />} />
         <Route path="/manualevaluation2" element={<ManualEval2 />} />
         <Route path="/manualevaluation/editBin/:binId" element={<EditBin />} />
         <Route path="/pickhandler" element={<PickHandler />} />

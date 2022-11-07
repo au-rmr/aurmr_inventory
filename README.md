@@ -142,7 +142,7 @@ Finally, in the  `server/prisma/schema.prisma`, you can define the tables for th
 
 ### Frontend
 In the [`src`](https://github.com/au-rmr/aurmr_inventory/tree/main/src), inside the `components` folder, the important ones are the following: 
-* `ManualEval.tsx` -> Frontend for handling the stowing process. 
+* `StowHandler.tsx` -> Frontend for handling the stowing process. 
 * `PickHandler.tsx` -> Frontend for handling the picking process. 
 * `Evaluator.tsx` -> Frontend for random generation of product configurations in bins. Not currently in use but could be built on for future use.
 

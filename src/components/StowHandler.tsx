@@ -1,5 +1,5 @@
 import React, { Component, useEffect, useState } from 'react';
-import "../styles/ManualEval.css";
+import "../styles/StowHandler.css";
 import { useRef } from 'react';
 
 import { Link } from 'react-router-dom';
@@ -46,16 +46,16 @@ import { matrix, subtract, row, ResultSetDependencies } from 'mathjs';
 import ROSLIB from "roslib";
 import { useROS } from "react-ros";
 
-interface ManualEvalProps {
+interface StowHandlerProps {
 
 }
 
-interface ManualEvalState {
+interface StowHandlerState {
     rows: JSX.Element[]
     cols: JSX.Element[]
 }
 
-function ManualEval(props: any) {
+function StowHandler(props: any) {
     const debug: boolean = false;
 
     const NUM_ROWS: number = 10;
@@ -823,4 +823,4 @@ function ManualEval(props: any) {
     )
 }
 
-export default ManualEval;
+export default StowHandler;
