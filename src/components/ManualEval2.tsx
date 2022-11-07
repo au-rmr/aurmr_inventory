@@ -1,5 +1,5 @@
 import React, { Component, useState } from 'react';
-import "../styles/ManualEval.css";
+import "../styles/StowHandler.css";
 import { useRef } from 'react';
 
 import Bin from "./Bin";
