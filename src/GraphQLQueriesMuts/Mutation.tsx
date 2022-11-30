@@ -1,3 +1,8 @@
+/**
+ * @file GraphQL Mutation definitions
+ *
+ * Used with the Apollo client. See: https://www.apollographql.com/docs/react/data/mutations/
+ */
 import { useQuery, gql } from "@apollo/client";
 
 export const ADD_PROD_TO_BIN_FOR_AN_EVAL = gql`

@@ -6,7 +6,7 @@ class Mapper implements Mapper {
     constructor(file: string) {
         console.log("Mapper being constructed")
         this.map = {};
-        fetch('/data/external_id_to_asin.tsv')
+        fetch(file)
             .then((r) => r.text())
             .then(text => {
                 const lines = text.split('\n');
@@ -23,17 +23,17 @@ class Mapper implements Mapper {
 
     }
 
-    /*
-    * input: an id on an object (shown like a barcode)
-    * output: corresponding ASIN code
-    */
-    id2Asin(id: string) {
+    /**
+     * input: an id on an object (shown like a barcode)
+     * output: corresponding ASIN code if found, `undefined` otherwise
+     */
+    id2Asin(id: string): string | undefined {
         return this.map[id]
     }
 }
 
-// Remove this when one testing
-const mapper = new Mapper('6in.txt')
+// Remove this when done testing
+const mapper = new Mapper('/data/external_id_to_asin.tsv')
 console.log(mapper.id2Asin('00038902103840'))
 
 export default Mapper

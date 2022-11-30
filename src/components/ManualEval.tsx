@@ -70,7 +70,7 @@ function ManualEval(props: any) {
 
 
     // Create mapper (useRef to only construct once)
-    const ID_TO_ASIN_FILE_PATH: string = "../../data/external_id_to_asin.tsv";
+    const ID_TO_ASIN_FILE_PATH: string = "/data/external_id_to_asin.tsv";
     const id_to_asin_mapper_ref: React.MutableRefObject<Mapper|undefined> = useRef();
 
     useEffect(() => {
@@ -83,6 +83,8 @@ function ManualEval(props: any) {
     const [tables, setTables] = useState<String>("");
     const [isASINError, setisAsinError] = useState<boolean>(false);
     const [isBinError, setisBinError] = useState<boolean>(false);
+    // React state variable which stores the value of the product to submit
+    // This is just the value in the product ID input box (may be incomplete)
     const [submitableProd, setSubmitableProd] = useState<string>("");
     const [submitableBin, setSubmitableBin] = useState<string>("");
     const [binErrorMsg, setBinErrorMsg] = useState<String>("");
@@ -152,10 +154,12 @@ function ManualEval(props: any) {
 
     let binList: string[] = [];
     let binInfoList: any[] = [];
+    // A list of all of the ASINs in the product database. Filled in below using an Apollo query.
     let prodList: string[] = [];
 
     const { data: BinData, loading: BinLoading, error: BinError } = useQuery(GET_ALL_BINS);
     const { data: prodData, loading: prodLoading, error: prodError } = useQuery(GET_ALL_PROD);
+    // Apollo mutation for adding a product to a given bin for a given eval.
     const [add_prod_to_bin, { data: addProdToBinData, loading: addProdToBinLoading, error: addProdToBinError }] = useMutation(ADD_PROD_TO_BIN_FOR_AN_EVAL);
     const { data: evalData, loading: evalLoading, error: evalError, refetch: evalRefetch } = useQuery(GET_ONE_EVAL);
     const { data: eachBinData, loading: eachBinDataLoading, error: eachBinDataErrorLoading, refetch: prodInBinEvalRefetch } = useQuery(GET_PROD_IN_BIN_FOR_EVAL);
@@ -173,6 +177,7 @@ function ManualEval(props: any) {
         }
     }, [isRobotMoving, submitMessage]);
 
+    // Based on the status of certain queries, we just display simple loading messages
     if ((BinLoading) || (prodLoading) || (evalLoading) || (eachBinDataLoading)) return <p>Loading...</p>;
     if (addProdToBinLoading) return <p>Submitting...</p>
     if (BinError) return <p>Error: {BinError.message}</p>
@@ -205,20 +210,36 @@ function ManualEval(props: any) {
         prodList.push(prodData.getAllProducts[j].asin)
     }
 
+    /**
+     * Returns `true` iff the ASIN `item` is found in the Prisma product database.
+     * `false` otherwise.
+     */
     function isASINValid(item: string): boolean {
-        if (prodList.includes(item)) {
-            return true;
-        }
-        return false;
+        return prodList.includes(item);
     }
 
+    /**
+     * Called when the item input box is changed. Sets various component state
+     * to indicate whether or not the ASIN is valid etc.
+     */
     const checkValidASIN = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setSubmitMessage("");
         setWarningMsg("");
         console.log(e.target.value);
-        setSubmitableProd(e.target.value);
+        let asin: string = e.target.value;
+
+        // Try to translate the input if it doesn't match any known ASINs
+        if (!isASINValid(e.target.value)) {
+            const mapped_asin: string | undefined = id_to_asin_mapper_ref.current?.id2Asin(e.target.value);
+            if (typeof mapped_asin !== "undefined") {
+                asin = mapped_asin;
+            }
+        }
+
+        setSubmitableProd(asin);
+
         let asinErr: boolean = true;
-        let getProdFromDB = (await oneProdRefetch({ asin: e.target.value }));
+        let getProdFromDB = (await oneProdRefetch({ asin: asin }));
         if (getProdFromDB.data.getProduct.length != 0) {
             if (getProdFromDB.data.getProduct[0].size_units != "Unavailable") {
                 console.log("true");
@@ -257,7 +278,7 @@ function ManualEval(props: any) {
             return;
         }
         if (autoOrManual != "Manual") {
-            submitIfComplete(asinErr, isBinError, e.target.value, submitableBin);
+            submitIfComplete(asinErr, isBinError, asin, submitableBin);
         }
     }
 
@@ -397,6 +418,14 @@ function ManualEval(props: any) {
         }
     }
 
+    /**
+     * Submits a product-bin object to the database.
+     * 
+     * @param isasinError: Whether there is an asinError. Function does not do anything if this is false
+     * @param isbinError: Whether there is a bin error. Function does not do anything if this is false
+     * @param sProd: The ASIN of the product to stow
+     * @param sBin: The bin ID of the bin to store the product in
+     */
     async function submitIfComplete(isasinError: boolean, isbinError: boolean, sProd: string, sBin: string) {
         console.log("entered submission")
         if (!isasinError && !isbinError && sProd != "" && sBin != "" && submitableEvalName != "") {
