@@ -15,6 +15,7 @@ import { GET_ONE_PROD } from '../GraphQLQueriesMuts/Query';
 import { GET_BIN_FROM_BINID } from '../GraphQLQueriesMuts/Query';
 import { GET_PRODBINID_FROM_EVALNAME } from '../GraphQLQueriesMuts/Query';
 import { convertCompilerOptionsFromJson, JsxEmit } from 'typescript';
+import Mapper from "../util/Mapper"
 
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
@@ -46,15 +47,6 @@ import { matrix, subtract, row, ResultSetDependencies } from 'mathjs';
 import ROSLIB from "roslib";
 import { useROS } from "react-ros";
 
-interface ManualEvalProps {
-
-}
-
-interface ManualEvalState {
-    rows: JSX.Element[]
-    cols: JSX.Element[]
-}
-
 function ManualEval(props: any) {
     const debug: boolean = false;
 
@@ -75,6 +67,15 @@ function ManualEval(props: any) {
         rows: 8,
         cols: 3
     }
+
+
+    // Create mapper (useRef to only construct once)
+    const ID_TO_ASIN_FILE_PATH: string = "../../data/external_id_to_asin.tsv";
+    const id_to_asin_mapper_ref: React.MutableRefObject<Mapper|undefined> = useRef();
+
+    useEffect(() => {
+        id_to_asin_mapper_ref.current = new Mapper(ID_TO_ASIN_FILE_PATH);
+    }, []); // Empty brackets to only run effect once
 
     const [rows, setRows] = useState<JSX.Element[]>([]);
     const [cols, setCols] = useState<JSX.Element[]>([]);
