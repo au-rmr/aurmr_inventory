@@ -225,8 +225,16 @@ function ManualEval(props: any) {
     const checkValidASIN = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setSubmitMessage("");
         setWarningMsg("");
-        console.log(e.target.value);
+        console.log('target value: ' + e.target.value);
         let asin: string = e.target.value;
+        // After investigation, this async function will still be called even after we found an ASIN for some reason.
+        // In this case, the e.target.value will be something like ASIN plus a trailing number.
+        // This is not expected. but because the async nature of await oneProdRefetch() and React lifecycle, it's hard to debug...
+        // An expedited idea here is to have a filter to immediately return in this abnormal case.
+        // Please update the code when anyone finds a better solution
+        if (asin.length > 10 && asin[0] >= 'A' && asin[0] <= 'Z') {
+            return
+        }
 
         // Try to translate the input if it doesn't match any known ASINs
         if (!isASINValid(e.target.value)) {
@@ -235,7 +243,6 @@ function ManualEval(props: any) {
                 asin = mapped_asin;
             }
         }
-
         setSubmitableProd(asin);
 
         let asinErr: boolean = true;
