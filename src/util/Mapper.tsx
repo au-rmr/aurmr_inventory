@@ -2,19 +2,32 @@ interface Mapper {
     map: any,
 }
 
+/**
+ * Parses a TSV file for ID to ASIN mapping and provides access
+ * to said mappings.
+ */
 class Mapper implements Mapper {
     constructor(file: string) {
         console.log("Mapper being constructed")
         this.map = {};
+
+        // TODO: Replace the TSV parsing in this file with some library
+        // as this code is sus.
         fetch(file)
             .then((r) => r.text())
             .then(text => {
                 const lines = text.split('\n');
-                for (let i = 1; i < lines.length - 1; i++) {  // ignore first and last empty line
-                    const cols = lines[i].split('\t');
+
+                // Iterate over lines
+                for (let i = 1; i < lines.length - 1; i++) {
+                    const cols = lines[i].trim().split('\t');
                     const asin = cols[0];
                     const str = cols[1];
-                    const ids: Array<string> = str.substring(1, str.length - 2).split(',');
+
+                    // Remove quotation marks surrounding the IDs.
+                    // TODO: at some point we should probably switch this for logic
+                    // which actually checks for the presence of the quotation marks.
+                    const ids: Array<string> = str.substring(1, str.length - 1).split(',');
                     for (const id of ids) {
                         this.map[id] = asin;
                     }

@@ -230,8 +230,11 @@ function ManualEval(props: any) {
 
         // Try to translate the input if it doesn't match any known ASINs
         if (!isASINValid(e.target.value)) {
+            console.log(e.target.value + " is not valid ASIN, trying to translate...")
             const mapped_asin: string | undefined = id_to_asin_mapper_ref.current?.id2Asin(e.target.value);
+            console.log(e.target.value + " mapped to: " + mapped_asin);
             if (typeof mapped_asin !== "undefined") {
+                console.log("Mapping is good, setting asin");
                 asin = mapped_asin;
             }
         }
