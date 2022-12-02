@@ -41,6 +41,8 @@ import Table from '@mui/material/Table';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 
+import RetryModal from './RetryModal'
+
 import { matrix, subtract, row, ResultSetDependencies } from 'mathjs';
 
 import ROSLIB from "roslib";
@@ -120,10 +122,13 @@ function ManualEval(props: any) {
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
 
+    const [isRetryModalOpen, setIsRetryModalOpen] = useState<boolean>(false);
+    const [retryActionServer, setRetryActionServer] = useState<any>(0);
+
     function connectToRos() {
         let ros: any;
         ros = new ROSLIB.Ros({
-            url: 'ws://control:9090'
+            url: process.env.REACT_APP_ROS_WS_BRIDGE
         });
 
         ros.on('connection', function () {
@@ -146,6 +151,16 @@ function ManualEval(props: any) {
             name: "aurmr_demo/stow",
             serviceType: "/aurmr_tasks/StowRequest"
         }));
+
+        setRetryActionServer(new ROSLIB.SimpleActionServer({
+            ros: ros,
+            serverName: 'aurmr/hri/retry_grasp',
+            actionName: '/aurmr_tasks/hri/RetryGraspAction'
+        }));
+
+        retryActionServer.on('goal', function(goalMessage: any) {
+            setIsRetryModalOpen(true);
+        });
     }
 
 
@@ -655,6 +670,16 @@ function ManualEval(props: any) {
         }
     }
 
+    function onClickRetry() {
+        var result = { response: true };
+        retryActionServer.setSucceeded(result);
+    }
+
+    function onClickAbort() {
+        var result = { response: false };
+        retryActionServer.setSucceeded(result);
+    }
+
     return (
         <div id="overall" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gridGap: 5 }}>
             <div>
@@ -665,6 +690,7 @@ function ManualEval(props: any) {
                         {debug ? <Button onClick={onClickRecMessage}>Received Message</Button> : <br />}
                     </div> :
                     <div>
+                        {isRetryModalOpen ? <RetryModal onRetry={onClickRetry} onAbort={onClickAbort} /> : null}
                         <p style={{ "display": "inline", "marginLeft": "15px" }}>Step 1: </p><Button disabled={isConnected} style={{ "display": "inline" }} variant="contained" id="connectToBot" onClick={connectToRos}>Connect to Robot</Button>
                         <div style={{ "display": "block", "margin": "15px" }}>
 
