@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useState } from 'react';
+import React, { Component, useEffect, useState, useCallback } from 'react';
 import "../styles/ManualEval.css";
 import { useRef } from 'react';
 
@@ -46,6 +46,8 @@ import { matrix, subtract, row, ResultSetDependencies } from 'mathjs';
 
 import ROSLIB from "roslib";
 import { useROS } from "react-ros";
+
+import { debounce } from "lodash";
 
 function ManualEval(props: any) {
     const debug: boolean = false;
@@ -177,39 +179,6 @@ function ManualEval(props: any) {
         }
     }, [isRobotMoving, submitMessage]);
 
-    // Based on the status of certain queries, we just display simple loading messages
-    if ((BinLoading) || (prodLoading) || (evalLoading) || (eachBinDataLoading)) return <p>Loading...</p>;
-    if (addProdToBinLoading) return <p>Submitting...</p>
-    if (BinError) return <p>Error: {BinError.message}</p>
-    if (prodError) return <p>Error: {prodError.message}</p>
-    if (addProdToBinError) return <p>Error: {addProdToBinError.message}</p>
-    // if (evalError) return <p>Error: {evalError.message}</p>
-
-    for (let i = 0; i < Object.keys(BinData.getAllBins).length; i++) {
-        binList.push(BinData.getAllBins[i].BinId);
-        let totVol = 0;
-        for (let j = 0; j < Object.keys(BinData.getAllBins[i].AmazonProducts).length; j++) {
-            totVol += BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_length * BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_width * BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_height;
-        }
-        binInfoList.push(
-            {
-                "binId": BinData.getAllBins[i].BinId,
-                "tableName": BinData.getAllBins[i].TableName,
-                "binName": BinData.getAllBins[i].BinName,
-                "depth": BinData.getAllBins[i].depth,
-                "width": BinData.getAllBins[i].width,
-                "height": BinData.getAllBins[i].height,
-                "units": BinData.getAllBins[i].dimensions_units,
-                "current_gcu": totVol / (BinData.getAllBins[i].depth * BinData.getAllBins[i].width * BinData.getAllBins[i].height),
-                "current_volume_of_prods": totVol
-            }
-        );
-    }
-
-    for (let j = 0; j < Object.keys(prodData.getAllProducts).length; j++) {
-        prodList.push(prodData.getAllProducts[j].asin)
-    }
-
     /**
      * Returns `true` iff the ASIN `item` is found in the Prisma product database.
      * `false` otherwise.
@@ -283,6 +252,18 @@ function ManualEval(props: any) {
         if (autoOrManual != "Manual") {
             submitIfComplete(asinErr, isBinError, asin, submitableBin);
         }
+    }
+
+    // Create debounced version of checkValidASIN
+    // https://stackoverflow.com/questions/36294134/lodash-debounce-with-react-input
+
+    // Number of ms to debounce for
+    const DEBOUNCE_MS = 500;
+    const checkValidASINDebounced = useCallback(debounce(checkValidASIN, DEBOUNCE_MS), []);
+
+    const handleASINInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSubmitableProd(e.target.value);
+        checkValidASINDebounced(e);
     }
 
     const objOrientationChosen = (prodLen: number, prodWid: number, prodHt: number, binHt: number, binWid: number, binDepth: number, lenFromWid: number): number => {
@@ -688,6 +669,41 @@ function ManualEval(props: any) {
         }
     }
 
+    /** Actual logic... begin! */
+
+    // Based on the status of certain queries, we just display simple loading messages
+    if ((BinLoading) || (prodLoading) || (evalLoading) || (eachBinDataLoading)) return <p>Loading...</p>;
+    if (addProdToBinLoading) return <p>Submitting...</p>
+    if (BinError) return <p>Error: {BinError.message}</p>
+    if (prodError) return <p>Error: {prodError.message}</p>
+    if (addProdToBinError) return <p>Error: {addProdToBinError.message}</p>
+    // if (evalError) return <p>Error: {evalError.message}</p>
+
+    for (let i = 0; i < Object.keys(BinData.getAllBins).length; i++) {
+        binList.push(BinData.getAllBins[i].BinId);
+        let totVol = 0;
+        for (let j = 0; j < Object.keys(BinData.getAllBins[i].AmazonProducts).length; j++) {
+            totVol += BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_length * BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_width * BinData.getAllBins[i].AmazonProducts[j].amazonProduct.size_height;
+        }
+        binInfoList.push(
+            {
+                "binId": BinData.getAllBins[i].BinId,
+                "tableName": BinData.getAllBins[i].TableName,
+                "binName": BinData.getAllBins[i].BinName,
+                "depth": BinData.getAllBins[i].depth,
+                "width": BinData.getAllBins[i].width,
+                "height": BinData.getAllBins[i].height,
+                "units": BinData.getAllBins[i].dimensions_units,
+                "current_gcu": totVol / (BinData.getAllBins[i].depth * BinData.getAllBins[i].width * BinData.getAllBins[i].height),
+                "current_volume_of_prods": totVol
+            }
+        );
+    }
+
+    for (let j = 0; j < Object.keys(prodData.getAllProducts).length; j++) {
+        prodList.push(prodData.getAllProducts[j].asin)
+    }
+
     return (
         <div id="overall" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gridGap: 5 }}>
             <div>
@@ -786,7 +802,7 @@ function ManualEval(props: any) {
                                     <FormLabel component="legend">Enter Automatically:</FormLabel>
                                     <FormControl id="itemInput" error={isASINError} variant="standard">
                                         <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                        <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" autoFocus={true} />
+                                        <Input inputRef={refASIN} onChange={handleASINInputChange} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" autoFocus={true} />
                                     </FormControl>
 
                                     <FormControl id="binInput" error={isBinError} variant="standard">
@@ -809,7 +825,7 @@ function ManualEval(props: any) {
                                     <FormLabel component="legend">Enter Manually:</FormLabel>
                                     <FormControl id="itemInput" error={isASINError} variant="standard">
                                         <InputLabel htmlFor="itemASIN">Item ASIN</InputLabel>
-                                        <Input inputRef={refASIN} onChange={checkValidASIN} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
+                                        <Input inputRef={refASIN} onChange={handleASINInputChange} value={submitableProd} error={isASINError} id="itemASIN" placeholder="Item ASIN" />
                                     </FormControl>
 
                                     <FormControl id="binInput" error={isBinError} variant="standard">
