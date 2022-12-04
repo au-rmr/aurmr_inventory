@@ -192,6 +192,7 @@ function ManualEval(props: any) {
      * to indicate whether or not the ASIN is valid etc.
      */
     const checkValidASIN = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        console.log("calling checkValidASIN()")
         setSubmitMessage("");
         setWarningMsg("");
         console.log(e.target.value);
@@ -213,8 +214,9 @@ function ManualEval(props: any) {
         let asinErr: boolean = true;
         let getProdFromDB = (await oneProdRefetch({ asin: asin }));
         if (getProdFromDB.data.getProduct.length != 0) {
+            console.log("getProdFromDB got something!")
             if (getProdFromDB.data.getProduct[0].size_units != "Unavailable") {
-                console.log("true");
+                console.log("Product has size data available");
                 setisAsinError(false);
                 setBinErrorMsg("");
                 asinErr = false;
@@ -225,8 +227,14 @@ function ManualEval(props: any) {
                 let nPotGCU = (currTotalObjVol + thisProdVol) / currPodVol;
                 setNewPotGCU(nPotGCU);
 
+                // For some reason previousProdBin is coming up empty even after submitting one
+                // product and bin pair
+                console.log("Querying Eval name of: " + submitableEvalName);
                 let previousProdBin = await OneProdBinRefetch({ evalName: submitableEvalName });
+                console.log("previousProdBin: ");
+                console.log(previousProdBin);
                 if (previousProdBin.data.getProdBinsFromEvalName.length != 0) {
+                    console.log("More than one ProdBin, going to take photo if not taken. isPhotoTaken = " + isPhotoTaken)
                     if (!isPhotoTaken) {
                         onClickTakePhoto();
                         setIsPhotoTaken(true);
@@ -250,6 +258,7 @@ function ManualEval(props: any) {
             return;
         }
         if (autoOrManual != "Manual") {
+            console.log("Auto-submitting inside checkValidASIN...")
             submitIfComplete(asinErr, isBinError, asin, submitableBin);
         }
     }
@@ -259,7 +268,13 @@ function ManualEval(props: any) {
 
     // Number of ms to debounce for
     const DEBOUNCE_MS = 500;
-    const checkValidASINDebounced = useCallback(debounce(checkValidASIN, DEBOUNCE_MS), []);
+    // Essential here that the callback has proper dependencies so that the callback
+    // is recreated when these states are updated. See the note here:
+    // https://reactjs.org/docs/hooks-reference.html#conditionally-firing-an-effect
+    const checkValidASINDebounced = useCallback(
+        debounce(checkValidASIN, DEBOUNCE_MS),
+        [submitableEvalName, isPhotoTaken]
+        );
 
     const handleASINInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSubmitableProd(e.target.value);
@@ -411,9 +426,11 @@ function ManualEval(props: any) {
      * @param sBin: The bin ID of the bin to store the product in
      */
     async function submitIfComplete(isasinError: boolean, isbinError: boolean, sProd: string, sBin: string) {
-        console.log("entered submission")
+        console.log("entered submitIfComplete, isasinError: " + isasinError + ", isbinError: " + isbinError
+            + ", sProd: " + sProd + ", sBin: " + sBin);
+
         if (!isasinError && !isbinError && sProd != "" && sBin != "" && submitableEvalName != "") {
-            //submit
+            console.log("Submission variables are good, submitting...")
             add_prod_to_bin({ variables: { asin: sProd, binId: sBin, evalName: submitableEvalName } })
             setSubmitMessage("Submit Successful: " + sProd + " inside " + sBin + " for " + submitableEvalName)
             console.log("submit: " + sProd + " inside " + sBin + " for " + submitableEvalName);
@@ -653,6 +670,7 @@ function ManualEval(props: any) {
     }
 
     async function onClickTakePhoto() {
+        console.log("calling onClickTakePhoto()...")
         let previousObjectQuery = await OneProdBinRefetch({ evalName: submitableEvalName });
         console.log(previousObjectQuery);
         let prevObj = previousObjectQuery.data.getProdBinsFromEvalName;
