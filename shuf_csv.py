@@ -16,7 +16,7 @@ def parse_csv(csv_file, output, num_items):
     print(f'Output will be {output}')
     print(f'Selecting {num_items} out of each bin')
     names = ['object', 'bin', 'description']
-    df = pd.read_csv(csv_file, names = names, dtype=dict(zip(names, ['str', 'str', 'str'])))
+    df = pd.read_csv(csv_file, names = names, usecols=[0, 1, 2], dtype=dict(zip(names, ['str', 'str', 'str'])))
     print(df.describe())
 
     if num_items > 0:
