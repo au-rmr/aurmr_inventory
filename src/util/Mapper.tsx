@@ -4,7 +4,7 @@ interface Mapper {
 
 /**
  * Parses a TSV file for ID to ASIN mapping and provides access
- * to said mappings.
+ * to said mappings.with amazon product links
  */
 class Mapper implements Mapper {
     constructor(file: string) {

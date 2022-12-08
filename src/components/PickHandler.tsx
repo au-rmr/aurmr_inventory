@@ -209,6 +209,7 @@ function PickHandler(props: PickHandlerProps) {
         let allProdsToDownload = [];
         console.log(getProdsFromEval);
         let csvContent = "data:text/csv;charset=utf-8,";
+        console.log(getProdsFromEval.data.getProdBinsFromEvalName);
         for (let i = 0; i < getProdsFromEval.data.getProdBinsFromEvalName.length; i++) {
             allProdsToDownload.push(getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.asin + ", " + getProdsFromEval.data.getProdBinsFromEvalName[i].bin.BinName + ", " + getProdsFromEval.data.getProdBinsFromEvalName[i].amazonProduct.name);
         }
@@ -220,6 +221,8 @@ function PickHandler(props: PickHandlerProps) {
 
         console.log(allProdsToDownload);
         var encodedUri = encodeURI(csvContent);
+        encodedUri = encodedUri.replace(/#/g, '%23'); // bc encodeURI doesn't replace #
+        console.log(csvContent);
         window.open(encodedUri);
     }
 
