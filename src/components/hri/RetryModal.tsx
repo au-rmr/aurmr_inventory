@@ -6,13 +6,14 @@ import Modal from '@mui/material/Modal';
 
 import BlockIcon from '@mui/icons-material/Block';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
 
 const style = {
   position: 'absolute' as 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  width: 500,
   bgcolor: 'background.paper',
   border: '2px solid #000',
   boxShadow: 24,
@@ -25,7 +26,9 @@ const retryBtnStyle = {
 
 interface RetryModalProps {
     onRetry: () => void,
-    onAbort: () => void
+    onAbort: () => void,
+    onTargetSelect: () => void,
+    showTargetSelectButton: boolean
 }
 
 export default function RetryModal(props: RetryModalProps) {
@@ -45,10 +48,15 @@ export default function RetryModal(props: RetryModalProps) {
             Grasp failed...
           </Typography>
           <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-            <p>Authorize retry?</p>
+            
             <Button onClick={props.onRetry} style={retryBtnStyle} variant="contained" color="success" startIcon={<RefreshIcon />}>
                 Retry
             </Button>
+            {props.showTargetSelectButton ? (
+              <Button onClick={props.onTargetSelect} style={retryBtnStyle} variant="contained" startIcon={<TrackChangesIcon />}>
+                  Select Target
+              </Button>
+            ) : null}
             <Button onClick={props.onAbort} variant="outlined" color="error" startIcon={<BlockIcon />}>
                 Abort
             </Button>

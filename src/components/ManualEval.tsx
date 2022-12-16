@@ -41,7 +41,8 @@ import Table from '@mui/material/Table';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 
-import RetryModal from './RetryModal'
+import RetryModal from './hri/RetryModal';
+import GraspPointSelectionModal from './hri/GraspPointSelectionModal';
 
 import { matrix, subtract, row, ResultSetDependencies } from 'mathjs';
 
@@ -122,8 +123,10 @@ function ManualEval(props: any) {
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
 
-    const [isRetryModalOpen, setIsRetryModalOpen] = useState<boolean>(false);
+    const [openModal, setOpenModal] = useState<string>("");
+    const [retryCameraFrameImageData, setRetryCameraFrameImageData] = useState<string>("");
     const [retryActionServer, setRetryActionServer] = useState<any>(0);
+    const [retryTargetPosition, setRetryTargetPosition] = useState<any>({x: 0.0, y: 0.0});
 
     function connectToRos() {
         let ros: any;
@@ -152,15 +155,26 @@ function ManualEval(props: any) {
             serviceType: "/aurmr_tasks/StowRequest"
         }));
 
-        setRetryActionServer(new ROSLIB.SimpleActionServer({
+        let ras = new ROSLIB.SimpleActionServer({
             ros: ros,
-            serverName: 'aurmr/hri/retry_grasp',
-            actionName: '/aurmr_tasks/hri/RetryGraspAction'
-        }));
-
-        retryActionServer.on('goal', function(goalMessage: any) {
-            setIsRetryModalOpen(true);
+            serverName: '/aurmr/hri/retry_grasp',
+            actionName: '/aurmr_hri/RetryGraspAction'
         });
+
+        ras.on('goal', (goalMessage: any) => {
+            if (goalMessage.camera_image.data) {
+                setRetryCameraFrameImageData("data:image/jpg;base64," + goalMessage.camera_image.data);
+            }
+            setOpenModal("retryDialog");
+        });
+
+        ras.on('cancel', (goalMessage: any) => {
+            console.log("Cancelled...")
+            setOpenModal("");
+            ras.setPreempted();
+        })
+
+        setRetryActionServer(ras);
     }
 
 
@@ -671,13 +685,47 @@ function ManualEval(props: any) {
     }
 
     function onClickRetry() {
-        var result = { response: true };
+        var result = {
+            retry: true,
+            x: retryTargetPosition.x,
+            y: retryTargetPosition.y
+        };
         retryActionServer.setSucceeded(result);
+        setOpenModal('');
+        setRetryTargetPosition({x: 0.0, y: 0.0});
     }
 
     function onClickAbort() {
-        var result = { response: false };
+        var result = { retry: false };
         retryActionServer.setSucceeded(result);
+        setOpenModal('');
+    }
+
+    function onClickTargetSelect() {
+        setOpenModal('graspPointSelectDialog');
+    }
+
+    function onTargetSelected(targetPosition: any) {
+        setRetryTargetPosition(targetPosition);
+    }
+
+    function renderModalDialog() {
+        if (openModal == 'retryDialog') {
+            return <RetryModal
+                showTargetSelectButton={retryCameraFrameImageData !== ''}
+                onRetry={onClickRetry}
+                onAbort={onClickAbort}
+                onTargetSelect={onClickTargetSelect} />;
+        }
+
+        if (openModal == 'graspPointSelectDialog') {
+            return <GraspPointSelectionModal 
+                imageData={retryCameraFrameImageData}
+                onTargetSelected={onTargetSelected}
+                onRetry={onClickRetry}
+                onAbort={onClickAbort} />;
+        }
+        
     }
 
     return (
@@ -690,7 +738,7 @@ function ManualEval(props: any) {
                         {debug ? <Button onClick={onClickRecMessage}>Received Message</Button> : <br />}
                     </div> :
                     <div>
-                        {isRetryModalOpen ? <RetryModal onRetry={onClickRetry} onAbort={onClickAbort} /> : null}
+                        {renderModalDialog()}
                         <p style={{ "display": "inline", "marginLeft": "15px" }}>Step 1: </p><Button disabled={isConnected} style={{ "display": "inline" }} variant="contained" id="connectToBot" onClick={connectToRos}>Connect to Robot</Button>
                         <div style={{ "display": "block", "margin": "15px" }}>
 
