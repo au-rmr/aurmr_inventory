@@ -157,7 +157,7 @@ function ManualEval(props: any) {
     let binList: string[] = [];
     let binInfoList: any[] = [];
     // A list of all of the ASINs in the product database. Filled in below using an Apollo query.
-    let prodList: string[] = [];
+    let prodList = new Set<string>();
 
     const { data: BinData, loading: BinLoading, error: BinError } = useQuery(GET_ALL_BINS);
     const { data: prodData, loading: prodLoading, error: prodError } = useQuery(GET_ALL_PROD);
@@ -184,7 +184,7 @@ function ManualEval(props: any) {
      * `false` otherwise.
      */
     function isASINValid(item: string): boolean {
-        return prodList.includes(item);
+        return prodList.has(item);
     }
 
     /**
@@ -719,7 +719,7 @@ function ManualEval(props: any) {
     }
 
     for (let j = 0; j < Object.keys(prodData.getAllProducts).length; j++) {
-        prodList.push(prodData.getAllProducts[j].asin)
+        prodList.add(prodData.getAllProducts[j].asin)
     }
 
     return (
