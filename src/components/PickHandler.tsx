@@ -62,6 +62,7 @@ function PickHandler(props: PickHandlerProps) {
         if (uploadedData && evalTextArea) {
             let bin_ids: string[] = [];
             let object_ids: string[] = [];
+            let object_asins: string[] = [];
             let count2 = 0;
             for (let i = 0; i < uploadedData.length; i++) {
                 const asinValue = uploadedData[i][0];
@@ -101,7 +102,8 @@ function PickHandler(props: PickHandlerProps) {
                                 setTableToDisplay(current => [...current, tablecell])
 
                                 bin_ids.push(objects[objects.length - 1]["binName"]);
-                                object_ids.push("" + objects[objects.length - 1]["productBinId"] + "")
+                                object_ids.push("" + objects[objects.length - 1]["productBinId"] + "");
+                                object_asins.push(objects[objects.length - 1]["asin"]);
 
                                 setIsRobotMoving(true);
                                 break;
@@ -117,7 +119,8 @@ function PickHandler(props: PickHandlerProps) {
                 let startTime = Date.now();
                 var request = new ROSLIB.ServiceRequest({
                     bin_ids: bin_ids,
-                    object_ids: object_ids
+                    object_ids: object_ids,
+                    object_asins: object_asins
                 });
                 console.log(request);
 
