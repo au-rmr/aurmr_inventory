@@ -557,6 +557,20 @@ module.exports = {
             return addBin
         },
 
+        updateBinDimensions: async(_, args, context, info) => {
+            const bin = context.prisma.bin.update({
+                where: {
+                    BinId: args.BinId
+                },
+                data: {
+                    depth: args.depth,
+                    width: args.width, 
+                    height: args.height
+                }
+            })
+            return bin
+        },
+
         addProdToBin: async (_, args, context, info) => {
             const prodToBin = context.prisma.productBin.create({
                 data: {

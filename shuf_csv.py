@@ -20,7 +20,7 @@ def parse_csv(csv_file, output, num_items):
     print(df.describe())
 
     if num_items > 0:
-        df = df.groupby('bin').sample(n=num_items)
+        df = df.groupby('bin').sample(n=1)
     else:
         print('Selecting all items in each bin')
     #df = df.groupby('bin').sample(frac=1)

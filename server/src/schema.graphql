@@ -57,6 +57,8 @@ type Mutation {
 
   createBin(BinId: String!, BinName: String!, TableId: String!, TableName: String, depth: Float, width: Float, height: Float, units: String): Bin!
 
+  updateBinDimensions(BinId: String!, depth: Float, width: Float, height: Float): Bin!
+
   addProdToBin(asin: String!, binId: String!, evalName: String!): ProductBin!
 
   deleteProdFromBin(id: ID!): ProductBin

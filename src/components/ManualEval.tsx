@@ -60,13 +60,13 @@ function ManualEval(props: any) {
         cols: 4
     }
 
-    const table1 = {
-        rows: 13,
+    const table1c = {
+        rows: 4,
         cols: 4
     }
 
-    const table2 = {
-        rows: 8,
+    const table2a = {
+        rows: 3,
         cols: 3
     }
 
@@ -128,7 +128,7 @@ function ManualEval(props: any) {
     function connectToRos() {
         let ros: any;
         ros = new ROSLIB.Ros({
-            url: 'ws://control:9090'
+            url: 'ws://emmons:9090'
         });
 
         ros.on('connection', function () {
@@ -480,7 +480,7 @@ function ManualEval(props: any) {
             for (let j = 1; j <= table.cols; j++) {
                 let binName1: string = ""
                 if (table.rows != 4) {
-                    binName1 = j + String.fromCharCode(64 + i);
+                    binName1 = j + String.fromCharCode(66 + i);
                 } else {
                     binName1 = j + String.fromCharCode(68 + i);
                 }
@@ -557,10 +557,10 @@ function ManualEval(props: any) {
     }
 
     async function generateTable() {
-        if (submitableEvalName != "" && tableName == "1") {
-            generateTableHelper(table1);
-        } else if (submitableEvalName != "" && tableName == "2") {
-            generateTableHelper(table2);
+        if (submitableEvalName != "" && tableName == "1-C-Half") {
+            generateTableHelper(table1c);
+        } else if (submitableEvalName != "" && tableName == "2-A-Half") {
+            generateTableHelper(table2a);
         } else if (submitableEvalName != "" && tableName == "1Half") {
             generateTableHelper(tableHalf);
         }
@@ -752,7 +752,7 @@ function ManualEval(props: any) {
                                         control={
                                             <Radio onChange={(e) => setTableName("1Half")} value="1Half" name="1Half" />
                                         }
-                                        label="Pod 1 (6-inch) Half"
+                                        label="Pod 1 (6-inch) A-Face Subset"
                                     />
                                     <FormControlLabel
                                         control={
@@ -760,12 +760,28 @@ function ManualEval(props: any) {
                                         }
                                         label="Pod 1 (6-inch)"
                                     />
+
+			            <FormControlLabel
+                                        control={
+                                            <Radio onChange={(e) => setTableName("1-C-Half")} value="1-C-Half" name="1-C-Half" />
+                                        }
+                                        label="Pod 1 C-Face Subset"
+                                    />
+
                                     <FormControlLabel
                                         control={
                                             <Radio disabled onChange={(e) => setTableName("2")} value="2" name="2" />
                                         }
-                                        label="Pod 2 (14-inch)"
+                                        label="Pod 2 (14-inch) A-Face Full"
                                     />
+
+					<FormControlLabel
+                                        control={
+                                            <Radio onChange={(e) => setTableName("2-A-Half")} value="2-A-Half" name="2-A-Half" />
+                                        }
+                                        label="Pod 2 (14-inch) A-Face Subset"
+                                    />
+
                                     <FormControlLabel
                                         control={
                                             <Checkbox disabled name="3" />

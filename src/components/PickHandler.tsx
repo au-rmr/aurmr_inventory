@@ -126,7 +126,7 @@ function PickHandler(props: PickHandlerProps) {
 
                 let ros: any;
                 ros = new ROSLIB.Ros({
-                    url: 'ws://control:9090'
+                    url: 'ws://emmons:9090'
                 });
 
                 ros.on('connection', function () {
