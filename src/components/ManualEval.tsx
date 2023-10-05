@@ -8,6 +8,7 @@ import { useLazyQuery, useQuery, useMutation } from '@apollo/client';
 import { GET_ALL_BINS } from '../GraphQLQueriesMuts/Query';
 import { GET_ALL_PROD } from '../GraphQLQueriesMuts/Query';
 import { ADD_PROD_TO_BIN_FOR_AN_EVAL } from '../GraphQLQueriesMuts/Mutation';
+import { ADD_AMAZON_PRODUCT } from '../GraphQLQueriesMuts/Mutation';
 import { GET_ONE_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_PROD_IN_BIN_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
 import { GET_PROD_IN_BIN_ID_FOR_EVAL } from '../GraphQLQueriesMuts/Query';
@@ -30,6 +31,7 @@ import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 import Input from '@mui/material/Input';
@@ -42,12 +44,15 @@ import Table from '@mui/material/Table';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 
+import Modal from '@mui/material/Modal';
+
 import { matrix, subtract, row, ResultSetDependencies } from 'mathjs';
 
 import ROSLIB from "roslib";
 import { useROS } from "react-ros";
 
-import { debounce } from "lodash";
+import { debounce, set } from "lodash";
+
 
 function ManualEval(props: any) {
     const debug: boolean = false;
@@ -115,6 +120,16 @@ function ManualEval(props: any) {
     const [newPotGCU, setNewPotGCU] = useState<number>(0);
     const [isPhotoTaken, setIsPhotoTaken] = useState<boolean>(false);
 
+    const [addItemModalOpen, setAddItemModalOpen] = useState<boolean>(false);
+    const [addItemASIN, setAddItemASIN] = useState<string>("");
+    const [addItemName, setAddItemName] = useState<string>("");
+    const [addItemLength, setAddItemLength] = useState<string>("");
+    const [addItemWidth, setAddItemWidth] = useState<string>("");
+    const [addItemHeight, setAddItemHeight] = useState<string>("");
+    const [addItemUnits, setAddItemUnits] = useState<string>("");
+    const [addItemWeight, setAddItemWeight] = useState<string>("");
+    const [addItemWeightUnits, setAddItemWeightUnits] = useState<string>("");
+
     const [autoFocusASIN, setAutoFocusASIN] = useState<boolean>(false);
     const [autoFocusBin, setAutoFocusBin] = useState<boolean>(false);
 
@@ -124,6 +139,30 @@ function ManualEval(props: any) {
 
     const [robotServiceClient, setRobotServiceClient] = useState<any>(0);
     const [isConnected, setIsConnected] = useState<boolean>(false);
+
+    const onAddItemModalClose = () => {
+        setAddItemModalOpen(false);
+        setAddItemASIN("");
+        setAddItemName("");
+        setAddItemLength("");
+        setAddItemWidth("");
+        setAddItemHeight("");
+        setAddItemUnits("");
+        setAddItemWeight("");
+        setAddItemWeightUnits("");
+    }
+
+    const modalStyle = {
+        position: 'absolute' as 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 500,
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+    };
 
     function connectToRos() {
         let ros: any;
@@ -163,6 +202,7 @@ function ManualEval(props: any) {
     const { data: prodData, loading: prodLoading, error: prodError } = useQuery(GET_ALL_PROD);
     // Apollo mutation for adding a product to a given bin for a given eval.
     const [add_prod_to_bin, { data: addProdToBinData, loading: addProdToBinLoading, error: addProdToBinError }] = useMutation(ADD_PROD_TO_BIN_FOR_AN_EVAL);
+    const [add_amazon_product, { data: addAmazonProductData, loading: addAmazonProductLoading, error: addAmazonProductError }] = useMutation(ADD_AMAZON_PRODUCT);
     const { data: evalData, loading: evalLoading, error: evalError, refetch: evalRefetch } = useQuery(GET_ONE_EVAL);
     const { data: eachBinData, loading: eachBinDataLoading, error: eachBinDataErrorLoading, refetch: prodInBinEvalRefetch } = useQuery(GET_PROD_IN_BIN_FOR_EVAL);
     const { data: eachBinIdData, loading: eachBinIdDataLoading, error: eachBinIdDataErrorLoading, refetch: prodInBinIdEvalRefetch } = useQuery(GET_PROD_IN_BIN_ID_FOR_EVAL);
@@ -254,6 +294,10 @@ function ManualEval(props: any) {
             setBinErrorMsg("Product doesn't exist.");
             setisAsinError(true);
             setBinIdDisabled(true);
+            setAddItemASIN(asin);
+            setAddItemUnits("inches");
+            setAddItemWeightUnits("pounds")
+            setAddItemModalOpen(true);
             asinErr = true;
             return;
         }
@@ -508,6 +552,8 @@ function ManualEval(props: any) {
                         "size_width": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_width,
                         "size_height": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_height,
                         "size_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.size_units,
+                        "weight": prods.data.getAmazonProductFromBinEval[i].amazonProduct.weight,
+                        "weight_units": prods.data.getAmazonProductFromBinEval[i].amazonProduct.weight_units,
                         "object_volume": objVol,
                     }
 
@@ -900,6 +946,118 @@ function ManualEval(props: any) {
                 </FormGroup>
                 <h3>Pod GCU: {parseFloat(podGCU.toString()).toFixed(3)}</h3>
                 {table1Actual}
+            </div>
+            <div className="addItemModal">
+            <Modal
+                open={addItemModalOpen}
+                onClose={onAddItemModalClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={modalStyle}>
+                {addAmazonProductLoading ? <p>Adding...</p> : 
+                (addAmazonProductError ? <p>{addAmazonProductError.message}</p> : (
+                    <>
+                    <h1>Add Item</h1>
+                    <FormControl id="addItemASINInput" variant="standard">
+                        <InputLabel htmlFor="addItemASINInput">Item ASIN</InputLabel>
+                        <Input onChange={(e) => setAddItemASIN(e.target.value)} value={addItemASIN} id="addItemASIN" placeholder="Item ASIN" />
+                    </FormControl>
+                    <FormControl id="addItemNameInput"  variant="standard">
+                        <InputLabel htmlFor="addItemNameInput">Item Name</InputLabel>
+                        <Input onChange={(e) => setAddItemName(e.target.value)} value={addItemName} id="addItemName" placeholder="Item Name" />
+                    </FormControl>
+                    <FormControl id="addItemLengthInput" variant="standard">
+                        <InputLabel htmlFor="addItemLengthInput">Length</InputLabel>
+                        <Input onChange={(e) => setAddItemLength(e.target.value)} value={addItemLength} id="addItemLength" placeholder="Length" />
+                    </FormControl>
+                    <FormControl id="addItemWidthInput" variant="standard">
+                        <InputLabel htmlFor="addItemWidthInput">Width</InputLabel>
+                        <Input onChange={(e) => setAddItemWidth(e.target.value)} value={addItemWidth} id="addItemWidth" placeholder="Width" />
+                    </FormControl>
+                    <FormControl id="addItemHeightInput" variant="standard">
+                        <InputLabel htmlFor="addItemHeightInput">Height</InputLabel>
+                        <Input onChange={(e) => setAddItemHeight(e.target.value)} value={addItemHeight} id="addItemHeight" placeholder="Height" />
+                    </FormControl>
+                    <FormControl id="addItemUnitsInput" variant="standard">
+                        <InputLabel htmlFor="addItemUnitsInput">Units</InputLabel>
+                        <Input onChange={(e) => setAddItemUnits(e.target.value)} value={addItemUnits} id="addItemUnits" placeholder="Units" />
+                    </FormControl>
+                    <FormControl id="addItemWeightInput" variant="standard">
+                        <InputLabel htmlFor="addItemWeightInput">Weight</InputLabel>
+                        <Input onChange={(e) => setAddItemWeight(e.target.value)} value={addItemWeight} id="addItemWeight" placeholder="Weight" />
+                    </FormControl>
+                    <FormControl id="addItemWeightUnitsInput" variant="standard">
+                        <InputLabel htmlFor="addItemWeightUnitsInput">Weight Units</InputLabel>
+                        <Input onChange={(e) => setAddItemWeightUnits(e.target.value)} value={addItemWeightUnits} id="addItemWeightUnits" placeholder="Weight Units" />
+                    </FormControl>
+                    <Button onClick={async () => {
+                        if (addItemASIN == "") {
+                            alert("ASIN cannot be empty");
+                            return;
+                        }
+                        if (addItemName == "") {
+                            alert("Name cannot be empty");
+                            return;
+                        }
+                        if (addItemLength == "") {
+                            alert("Length cannot be 0");
+                            return;
+                        }
+                        if (addItemWidth == "") {
+                            alert("Width cannot be 0");
+                            return;
+                        }
+                        if (addItemHeight == "") {
+                            alert("Height cannot be 0");
+                            return;
+                        }
+                        if (addItemUnits == "") {
+                            alert("Units cannot be empty");
+                            return;
+                        }
+                        if (addItemWeight == "") {
+                            alert("Weight cannot be 0");
+                            return;
+                        }
+                        if (addItemWeightUnits == "") {
+                            alert("Weight Units cannot be empty");
+                            return;
+                        }
+                        console.log({variables: {
+                            asin: addItemASIN,
+                            name: addItemName,
+                            size_length: addItemLength,
+                            size_width: addItemWidth,
+                            size_height: addItemHeight,
+                            size_units: addItemUnits,
+                            weight: addItemWeight,
+                            weight_units: addItemWeightUnits,
+                            attributes: []
+                        }})
+                        let result = add_amazon_product({variables: {
+                            asin: addItemASIN,
+                            name: addItemName,
+                            size_length: parseFloat(addItemLength),
+                            size_width: parseFloat(addItemWidth),
+                            size_height: parseFloat(addItemHeight),
+                            size_units: addItemUnits,
+                            weight: parseFloat(addItemWeight),
+                            weight_units: addItemWeightUnits,
+                            attributes: []
+                        }});
+                        console.log(result);
+                        onAddItemModalClose();
+                    }} variant="contained" color="success">
+                        Save
+                    </Button>
+                    <Button onClick={onAddItemModalClose} variant="outlined" color="error">
+                        Cancel
+                    </Button>
+                    </>
+                ))}
+                </Box>
+            </Modal>
             </div>
         </div>
 

@@ -433,6 +433,24 @@ module.exports = {
             return updateProd
         },
 
+        updateAmazonProduct: async (_, args, context, info) => {
+            const updatedProd = context.prisma.amazonProduct.update({
+                where : {
+                    asin: args.asin
+                },
+                data: {
+                    name: args.name,
+                    size_length: args.size_length,
+                    size_width: args.size_width,
+                    size_height: args.size_height,
+                    size_units: args.size_units,
+                    weight: args.weight,
+                    weight_units: args.weight_units
+                },
+            })
+            return updatedProd
+        },
+
         deleteProduct: async (_, args, context, info) => {
             const delRelation = context.prisma.amazonProductAttribute.deleteMany({
                 where: {

@@ -44,3 +44,34 @@ mutation editPickOutTime($id: Int!, $outcome: Boolean!, $time: Float!) {
   }
 }
 `
+
+
+export const ADD_AMAZON_PRODUCT = gql`
+mutation addAmazonProduct($asin: String!, $name: String!, $size_length: Float, $size_width: Float, $size_height: Float, $size_units: String, $weight: Float, $weight_units: String) {
+    addAmazonProduct(asin: $asin, name: $name, size_length: $size_length, size_width: $size_width, size_height: $size_height, size_units: $size_units, weight: $weight, weight_units: $weight_units, attributes: []) {
+        asin
+        name
+        size_length
+        size_width
+        size_height
+        size_units
+        weight
+        weight_units
+    }
+}
+`
+
+export const UPDATE_AMAZON_PRODUCT = gql`
+mutation updateAmazonProduct($asin: String!, $name: String!, $size_length: Float, $size_width: Float, $size_height: Float, $size_units: String, $weight: Float, $weight_units: String) {
+    updateAmazonProduct(asin: $asin, name: $name, size_length: $size_length, size_width: $size_width, size_height: $size_height, size_units: $size_units, weight: $weight, weight_units: $weight_units) {
+        asin
+        name
+        size_length
+        size_width
+        size_height
+        size_units
+        weight
+        weight_units
+    }
+}
+`

@@ -45,6 +45,8 @@ type Mutation {
 
   updateWeight(asin: String!, weight: Float!, weight_units: String!): AmazonProduct!
 
+  updateAmazonProduct(asin: String!, name: String!, size_length: Float, size_width: Float, size_height: Float, size_units: String, weight: Float, weight_units: String): AmazonProduct!
+
   deleteProduct(asin: String!): AmazonProduct
 
   deleteAttribute(attribute: ID!): AmazonProduct
