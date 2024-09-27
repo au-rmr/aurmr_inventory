@@ -15,6 +15,8 @@
 > it means that the `HOST` env variable needs to be set. For testing run `HOST=localhost` in the current shell before `yarn start` to run the server locally, otherwise
 > `HOST` should be set to `aurmr-control` (assuming you're on the `aurmr-control` workstation) so that other things can find
 > the server.
+> To do this more permanently create a `.env.local` file in the repo root
+> and add a line `HOST=some_host` there (replacing `some_host` with your hostname)
 
 ## How to start graphql playground? 
 For Your Information: graphql playground is something that runs on `localhost:4000` that provides a space for you to write and test out queries and mutations before making it official and adding it to your app. It also provides you a nice UI that prompts you suggestions when writing your queries and mutations. To get this working, please follow the steps below.
