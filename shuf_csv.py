@@ -8,7 +8,7 @@ import pandas as pd
 
 
 @click.command()
-@filepath_option('--csv-file', default='~/Downloads/')
+@filepath_option('--csv-file', default='/home/aurmr/Downloads/')
 @filepath_option('--output', default='~/Downloads/shuffled_items.csv')
 @click.option('--num-items', default=1,  prompt='Number of items to select in each bin.')
 def parse_csv(csv_file, output, num_items):
